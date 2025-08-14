@@ -18,6 +18,9 @@ interface Product {
   category?: string;
   image_url?: string;
   status: string;
+  product_type: string;
+  seller_id: string;
+  shipping_cost?: number;
 }
 
 export default function Products() {

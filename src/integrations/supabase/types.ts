@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversations: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          id: string
+          product_id: string | null
+          seller_id: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          seller_id: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          seller_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message_type: string | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           amount: number
@@ -61,10 +134,14 @@ export type Database = {
           id: string
           image_url: string | null
           price: number
+          product_type: string | null
           seller_id: string
+          shipping_cost: number | null
+          shipping_required: boolean | null
           status: string | null
           title: string
           updated_at: string
+          weight: number | null
         }
         Insert: {
           category?: string | null
@@ -74,10 +151,14 @@ export type Database = {
           id?: string
           image_url?: string | null
           price: number
+          product_type?: string | null
           seller_id: string
+          shipping_cost?: number | null
+          shipping_required?: boolean | null
           status?: string | null
           title: string
           updated_at?: string
+          weight?: number | null
         }
         Update: {
           category?: string | null
@@ -87,10 +168,14 @@ export type Database = {
           id?: string
           image_url?: string | null
           price?: number
+          product_type?: string | null
           seller_id?: string
+          shipping_cost?: number | null
+          shipping_required?: boolean | null
           status?: string | null
           title?: string
           updated_at?: string
+          weight?: number | null
         }
         Relationships: []
       }
@@ -105,6 +190,7 @@ export type Database = {
           phone: string | null
           updated_at: string
           user_id: string
+          user_role: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -116,6 +202,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id: string
+          user_role?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -127,6 +214,81 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+          user_role?: string | null
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_from_support: boolean | null
+          sender_email: string | null
+          sender_id: string | null
+          ticket_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_from_support?: boolean | null
+          sender_email?: string | null
+          sender_id?: string | null
+          ticket_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_from_support?: boolean | null
+          sender_email?: string | null
+          sender_id?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          priority: string | null
+          status: string | null
+          subject: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          priority?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          priority?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -135,7 +297,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

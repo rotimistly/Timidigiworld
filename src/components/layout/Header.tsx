@@ -36,10 +36,10 @@ export function Header() {
                     Dashboard
                   </Button>
                 </Link>
-                <Link to="/sell">
+                <Link to="/seller-dashboard">
                   <Button variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
-                    Sell Product
+                    Sell Products
                   </Button>
                 </Link>
                 <Link to="/cart">

@@ -17,6 +17,9 @@ interface Product {
   category?: string;
   image_url?: string;
   status: string;
+  product_type: string;
+  seller_id: string;
+  shipping_cost?: number;
 }
 
 const Index = () => {
@@ -86,7 +89,7 @@ const Index = () => {
                 Browse Products
               </Button>
             </Link>
-            <Link to={user ? "/sell" : "/auth"}>
+            <Link to={user ? "/seller-dashboard" : "/auth"}>
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
                 <Download className="h-5 w-5 mr-2" />
                 Start Selling
@@ -165,7 +168,7 @@ const Index = () => {
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">No featured products available yet.</p>
               {user && (
-                <Link to="/sell">
+                <Link to="/seller-dashboard">
                   <Button>Be the first to sell!</Button>
                 </Link>
               )}
@@ -181,7 +184,7 @@ const Index = () => {
           <p className="text-xl mb-8 text-primary-foreground/90">
             Join thousands of creators who are already earning from their digital products.
           </p>
-          <Link to={user ? "/sell" : "/auth"}>
+          <Link to={user ? "/seller-dashboard" : "/auth"}>
             <Button variant="secondary" size="lg">
               Start Selling Today
               <ArrowRight className="h-5 w-5 ml-2" />
