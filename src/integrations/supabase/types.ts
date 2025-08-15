@@ -7,13 +7,67 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          amount: number
+          booking_date: string
+          booking_time: string
+          created_at: string
+          currency: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_status: string | null
+          provider_id: string | null
+          service_id: string | null
+          service_location: string | null
+          status: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          booking_date: string
+          booking_time: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          provider_id?: string | null
+          service_id?: string | null
+          service_location?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          booking_date?: string
+          booking_time?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          provider_id?: string | null
+          service_id?: string | null
+          service_location?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           buyer_id: string
@@ -87,37 +141,175 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          order_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          order_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          order_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           amount: number
           buyer_id: string
+          commission_amount: number | null
+          commission_rate: number | null
           created_at: string
+          delivered_at: string | null
+          email_sent: boolean | null
           id: string
+          payment_method: string | null
           product_id: string
+          seller_amount: number | null
+          shipped_at: string | null
           status: string | null
+          tracking_number: string | null
           updated_at: string
         }
         Insert: {
           amount: number
           buyer_id: string
+          commission_amount?: number | null
+          commission_rate?: number | null
           created_at?: string
+          delivered_at?: string | null
+          email_sent?: boolean | null
           id?: string
+          payment_method?: string | null
           product_id: string
+          seller_amount?: number | null
+          shipped_at?: string | null
           status?: string | null
+          tracking_number?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
           buyer_id?: string
+          commission_amount?: number | null
+          commission_rate?: number | null
           created_at?: string
+          delivered_at?: string | null
+          email_sent?: boolean | null
           id?: string
+          payment_method?: string | null
           product_id?: string
+          seller_amount?: number | null
+          shipped_at?: string | null
           status?: string | null
+          tracking_number?: string | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_images: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          is_primary: boolean | null
+          product_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+          product_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+          product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -181,40 +373,177 @@ export type Database = {
       }
       profiles: {
         Row: {
+          apple_calendar_token: string | null
           avatar_url: string | null
           bio: string | null
+          business_name: string | null
           created_at: string
           full_name: string | null
+          google_calendar_token: string | null
           id: string
+          is_provider: boolean | null
           is_seller: boolean | null
+          payment_methods: string[] | null
           phone: string | null
+          region: string | null
           updated_at: string
           user_id: string
           user_role: string | null
         }
         Insert: {
+          apple_calendar_token?: string | null
           avatar_url?: string | null
           bio?: string | null
+          business_name?: string | null
           created_at?: string
           full_name?: string | null
+          google_calendar_token?: string | null
           id?: string
+          is_provider?: boolean | null
           is_seller?: boolean | null
+          payment_methods?: string[] | null
           phone?: string | null
+          region?: string | null
           updated_at?: string
           user_id: string
           user_role?: string | null
         }
         Update: {
+          apple_calendar_token?: string | null
           avatar_url?: string | null
           bio?: string | null
+          business_name?: string | null
           created_at?: string
           full_name?: string | null
+          google_calendar_token?: string | null
           id?: string
+          is_provider?: boolean | null
           is_seller?: boolean | null
+          payment_methods?: string[] | null
           phone?: string | null
+          region?: string | null
           updated_at?: string
           user_id?: string
           user_role?: string | null
+        }
+        Relationships: []
+      }
+      provider_schedules: {
+        Row: {
+          created_at: string
+          day_of_week: number | null
+          end_time: string
+          id: string
+          is_available: boolean | null
+          provider_id: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week?: number | null
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          provider_id?: string | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number | null
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          provider_id?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          booking_id: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          provider_id: string | null
+          rating: number | null
+          reviewer_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          provider_id?: string | null
+          rating?: number | null
+          reviewer_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          provider_id?: string | null
+          rating?: number | null
+          reviewer_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          price: number
+          provider_id: string | null
+          regions: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          price: number
+          provider_id?: string | null
+          regions?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          price?: number
+          provider_id?: string | null
+          regions?: string[] | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
