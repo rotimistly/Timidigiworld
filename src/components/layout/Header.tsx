@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, User, Search, Plus, Store } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -30,6 +31,7 @@ export function Header() {
           <nav className="flex items-center space-x-4">
             {user ? (
               <>
+                <NotificationCenter />
                 <Link to="/dashboard">
                   <Button variant="ghost" size="sm">
                     <User className="h-4 w-4 mr-2" />

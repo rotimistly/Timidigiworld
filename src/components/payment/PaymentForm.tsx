@@ -32,19 +32,16 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
     setIsProcessing(true);
 
     try {
-      // Create order first
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          buyer_id: user.id,
-          product_id: product.id,
-          amount: totalAmount,
-          status: 'pending'
-        })
-        .select()
-        .single();
+      // Process payment through edge function with commission system
+      const { data, error } = await supabase.functions.invoke('process-payment', {
+        body: {
+          productId: product.id,
+          paymentMethod: paymentMethod,
+          amount: totalAmount
+        }
+      });
 
-      if (orderError) throw orderError;
+      if (error) throw error;
 
       // Process payment based on method
       if (paymentMethod === 'paypal') {
@@ -56,9 +53,16 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
         // Show Cash App instructions
         toast({
           title: "Cash App Payment",
-          description: "Please send payment to $TimiDigiWorld and include order ID in notes",
+          description: `Please send $${totalAmount.toFixed(2)} to $TimiDigiWorld and include order ID: ${data.orderId} in notes`,
         });
       }
+
+      toast({
+        title: "Order Created",
+        description: data.trackingNumber 
+          ? `Order processed! Tracking: ${data.trackingNumber}`
+          : "Your order has been created successfully!",
+      });
 
       if (onSuccess) onSuccess();
 

@@ -81,6 +81,40 @@ export default function SellerDashboard() {
     fetchSellerData();
   };
 
+  const handleDeleteProduct = async (productId: string) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully!",
+      });
+
+      fetchSellerData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete product",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditProduct = (productId: string) => {
+    // Navigate to edit product page or open edit dialog
+    toast({
+      title: "Info",
+      description: "Edit functionality coming soon!",
+    });
+  };
+
   const totalRevenue = orders
     .filter(order => order.status === 'completed')
     .reduce((sum, order) => sum + Number(order.amount), 0);
@@ -224,12 +258,28 @@ export default function SellerDashboard() {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold">${product.price}</p>
-                          {product.category && (
-                            <p className="text-sm text-muted-foreground">{product.category}</p>
-                          )}
-                        </div>
+                         <div className="text-right">
+                           <p className="text-lg font-bold">${product.price}</p>
+                           {product.category && (
+                             <p className="text-sm text-muted-foreground">{product.category}</p>
+                           )}
+                           <div className="flex gap-2 mt-2">
+                             <Button
+                               size="sm"
+                               variant="outline"
+                               onClick={() => handleEditProduct(product.id)}
+                             >
+                               Edit
+                             </Button>
+                             <Button
+                               size="sm"
+                               variant="destructive"
+                               onClick={() => handleDeleteProduct(product.id)}
+                             >
+                               Delete
+                             </Button>
+                           </div>
+                         </div>
                       </div>
                     </CardContent>
                   </Card>
