@@ -9,6 +9,9 @@ import Contact from "./pages/Contact";
 import Products from "./pages/Products";
 import Dashboard from "./pages/Dashboard";
 import SellerDashboard from "./pages/SellerDashboard";
+import SellerProfile from "./pages/SellerProfile";
+import TrackOrders from "./pages/TrackOrders";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import { SupportChat } from "./components/support/SupportChat";
@@ -53,6 +56,17 @@ const App = () => (
               <SellerDashboard />
             </ProtectedRoute>
           } />
+          <Route path="/seller-profile" element={
+            <ProtectedRoute>
+              <SellerProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/track-orders" element={
+            <ProtectedRoute>
+              <TrackOrders />
+            </ProtectedRoute>
+          } />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/admin-dashboard" element={
             <ProtectedRoute>
               <AdminDashboard />

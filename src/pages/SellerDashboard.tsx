@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -140,20 +141,28 @@ export default function SellerDashboard() {
             <p className="text-muted-foreground mt-2">Manage your products and sales</p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
+          <div className="flex gap-2">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Add New Product</DialogTitle>
+                </DialogHeader>
+                <ProductForm onSuccess={handleProductSuccess} />
+              </DialogContent>
+            </Dialog>
+            <Link to="/seller-profile">
+              <Button variant="outline">
+                <Package className="h-4 w-4 mr-2" />
+                Manage Profile
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Add New Product</DialogTitle>
-              </DialogHeader>
-              <ProductForm onSuccess={handleProductSuccess} />
-            </DialogContent>
-          </Dialog>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}

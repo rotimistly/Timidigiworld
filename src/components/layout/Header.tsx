@@ -1,8 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, User, Search, Plus, Store } from 'lucide-react';
+import { ShoppingCart, User, Search, Plus, Store, Menu, Package, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 export function Header() {
@@ -28,7 +29,7 @@ export function Header() {
             </div>
           </div>
 
-          <nav className="flex items-center space-x-4">
+          <nav className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
                 <NotificationCenter />
@@ -44,9 +45,10 @@ export function Header() {
                     Sell Products
                   </Button>
                 </Link>
-                <Link to="/cart">
+                <Link to="/track-orders">
                   <Button variant="ghost" size="sm">
-                    <ShoppingCart className="h-4 w-4" />
+                    <Package className="h-4 w-4 mr-2" />
+                    Track Orders
                   </Button>
                 </Link>
                 <Button variant="ghost" size="sm" onClick={signOut}>
@@ -59,6 +61,50 @@ export function Header() {
               </Link>
             )}
           </nav>
+
+          {/* Mobile Navigation */}
+          <Sheet>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="sm">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <nav className="flex flex-col space-y-4 mt-8">
+                {user ? (
+                  <>
+                    <Link to="/dashboard" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                      <User className="h-5 w-5" />
+                      <span>Dashboard</span>
+                    </Link>
+                    <Link to="/seller-dashboard" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                      <Plus className="h-5 w-5" />
+                      <span>Sell Products</span>
+                    </Link>
+                    <Link to="/seller-profile" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                      <Settings className="h-5 w-5" />
+                      <span>Seller Profile</span>
+                    </Link>
+                    <Link to="/track-orders" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                      <Package className="h-5 w-5" />
+                      <span>Track Orders</span>
+                    </Link>
+                    <Link to="/products" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                      <ShoppingCart className="h-5 w-5" />
+                      <span>Browse Products</span>
+                    </Link>
+                    <Button variant="outline" onClick={signOut} className="justify-start">
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <Link to="/auth">
+                    <Button className="w-full">Sign In</Button>
+                  </Link>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

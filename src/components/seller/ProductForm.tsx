@@ -289,14 +289,23 @@ export function ProductForm({ onSuccess }: ProductFormProps) {
             
             {formData.product_type === 'digital' && (
               <div>
-                <Label htmlFor="file">Product File</Label>
+                <Label htmlFor="file">Product File (PDF, DOC, ZIP, etc.)</Label>
                 <div className="mt-1">
                   <Input
                     id="file"
                     type="file"
+                    accept=".pdf,.doc,.docx,.zip,.rar,.psd,.ai,.sketch,.fig,.mp4,.mov,.mp3,.wav"
                     onChange={(e) => setProductFile(e.target.files?.[0] || null)}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Supported formats: PDF, DOC, ZIP, PSD, AI, Sketch, Video, Audio files
+                  </p>
                 </div>
+                {productFile && (
+                  <div className="mt-2 p-2 bg-muted/50 rounded text-sm">
+                    Selected: {productFile.name} ({(productFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </div>
+                )}
               </div>
             )}
           </div>
