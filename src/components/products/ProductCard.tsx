@@ -144,7 +144,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         <Dialog open={showPayment} onOpenChange={setShowPayment}>
           <DialogContent>
             <PaymentForm 
-              product={product} 
+              product={{
+                ...product,
+                product_type: product.product_type
+              }} 
               onSuccess={() => setShowPayment(false)} 
             />
           </DialogContent>

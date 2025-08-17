@@ -43,9 +43,9 @@ serve(async (req) => {
       throw new Error("This endpoint is only for digital products");
     }
 
-    // Get buyer email from auth.users if not in profiles
+    // Get buyer email - priority: delivery_email > profile email > auth email
     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(order.buyer_id);
-    const buyerEmail = order.buyer?.email || authUser.user?.email;
+    const buyerEmail = order.delivery_email || order.buyer?.email || authUser.user?.email;
 
     if (!buyerEmail) {
       throw new Error("Buyer email not found");

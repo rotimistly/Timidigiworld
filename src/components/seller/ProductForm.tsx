@@ -21,6 +21,7 @@ export function ProductForm({ onSuccess }: ProductFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [productFile, setProductFile] = useState<File | null>(null);
+  const [productUrl, setProductUrl] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -86,8 +87,12 @@ export function ProductForm({ onSuccess }: ProductFormProps) {
         imageUrl = await handleImageUpload(imageFile);
       }
 
-      if (productFile && formData.product_type === 'digital') {
-        fileUrl = await handleProductFileUpload(productFile);
+      if (formData.product_type === 'digital') {
+        if (productFile) {
+          fileUrl = await handleProductFileUpload(productFile);
+        } else if (productUrl) {
+          fileUrl = productUrl;
+        }
       }
 
       const productData = {
@@ -131,6 +136,7 @@ export function ProductForm({ onSuccess }: ProductFormProps) {
       });
       setImageFile(null);
       setProductFile(null);
+      setProductUrl('');
 
       if (onSuccess) onSuccess();
 
@@ -289,23 +295,56 @@ export function ProductForm({ onSuccess }: ProductFormProps) {
             
             {formData.product_type === 'digital' && (
               <div>
-                <Label htmlFor="file">Product File (PDF, DOC, ZIP, etc.)</Label>
-                <div className="mt-1">
-                  <Input
-                    id="file"
-                    type="file"
-                    accept=".pdf,.doc,.docx,.zip,.rar,.psd,.ai,.sketch,.fig,.mp4,.mov,.mp3,.wav"
-                    onChange={(e) => setProductFile(e.target.files?.[0] || null)}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Supported formats: PDF, DOC, ZIP, PSD, AI, Sketch, Video, Audio files
-                  </p>
-                </div>
-                {productFile && (
-                  <div className="mt-2 p-2 bg-muted/50 rounded text-sm">
-                    Selected: {productFile.name} ({(productFile.size / 1024 / 1024).toFixed(2)} MB)
+                <Label>Digital Product Content</Label>
+                <div className="space-y-4 mt-2">
+                  <div>
+                    <Label htmlFor="productUrl" className="text-sm">Product URL/Link</Label>
+                    <Input
+                      id="productUrl"
+                      type="url"
+                      value={productUrl}
+                      onChange={(e) => setProductUrl(e.target.value)}
+                      placeholder="https://example.com/your-product or direct download link"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Direct link to your product (eBook, video, course, etc.)
+                    </p>
                   </div>
-                )}
+                  
+                  <div className="text-center">
+                    <span className="text-xs text-muted-foreground">OR</span>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="file" className="text-sm">Upload Product File</Label>
+                    <Input
+                      id="file"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.zip,.rar,.psd,.ai,.sketch,.fig,.mp4,.mov,.mp3,.wav"
+                      onChange={(e) => {
+                        setProductFile(e.target.files?.[0] || null);
+                        if (e.target.files?.[0]) setProductUrl(''); // Clear URL if file is selected
+                      }}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Upload files: PDF, DOC, ZIP, PSD, AI, Sketch, Video, Audio (Max 50MB)
+                    </p>
+                  </div>
+                  
+                  {productFile && (
+                    <div className="p-2 bg-muted/50 rounded text-sm">
+                      Selected: {productFile.name} ({(productFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </div>
+                  )}
+                  
+                  {productUrl && (
+                    <div className="p-2 bg-muted/50 rounded text-sm">
+                      Product Link: {productUrl}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -117,6 +117,36 @@ export type Database = {
           },
         ]
       }
+      email_performance_logs: {
+        Row: {
+          created_at: string | null
+          email_type: string
+          error_message: string | null
+          id: string
+          processing_time_ms: number | null
+          recipient_email: string
+          success: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_type: string
+          error_message?: string | null
+          id?: string
+          processing_time_ms?: number | null
+          recipient_email: string
+          success?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          processing_time_ms?: number | null
+          recipient_email?: string
+          success?: boolean | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -252,6 +282,7 @@ export type Database = {
           commission_rate: number | null
           created_at: string
           delivered_at: string | null
+          delivery_email: string | null
           email_sent: boolean | null
           id: string
           payment_gateway: string | null
@@ -271,6 +302,7 @@ export type Database = {
           commission_rate?: number | null
           created_at?: string
           delivered_at?: string | null
+          delivery_email?: string | null
           email_sent?: boolean | null
           id?: string
           payment_gateway?: string | null
@@ -290,6 +322,7 @@ export type Database = {
           commission_rate?: number | null
           created_at?: string
           delivered_at?: string | null
+          delivery_email?: string | null
           email_sent?: boolean | null
           id?: string
           payment_gateway?: string | null
@@ -886,6 +919,33 @@ export type Database = {
       }
     }
     Functions: {
+      get_booking_history_for_user: {
+        Args: { user_uuid: string }
+        Returns: {
+          amount: number
+          booking_date: string
+          booking_time: string
+          created_at: string
+          currency: string
+          custom_time: string
+          customer_name: string
+          id: string
+          notes: string
+          payment_method: string
+          payment_status: string
+          product_service_id: string
+          provider_id: string
+          provider_name: string
+          provider_phone: string
+          service_description: string
+          service_id: string
+          service_location: string
+          service_title: string
+          status: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: string

@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { productId, paymentMethod, amount } = await req.json();
+    const { productId, paymentMethod, amount, deliveryEmail } = await req.json();
 
     // Create Supabase client for user auth
     const authHeader = req.headers.get("Authorization")!;
@@ -88,6 +88,7 @@ serve(async (req) => {
         payment_method: paymentMethod,
         payment_gateway: "paystack",
         paystack_reference: reference,
+        delivery_email: deliveryEmail,
         commission_rate: commissionRate,
         commission_amount: commissionAmount,
         seller_amount: sellerAmount,
