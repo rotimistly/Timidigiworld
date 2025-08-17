@@ -61,7 +61,8 @@ export function Footer() {
         </div>
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 TimiDigiWorld. All rights reserved. Your trusted digital marketplace.</p>
+          <p className="mb-2">&copy; {new Date().getFullYear()} TimiDigiWorld. All rights reserved. Your trusted digital marketplace.</p>
+          <p>In collaboration with GoodBooks</p>
         </div>
       </div>
     </footer>

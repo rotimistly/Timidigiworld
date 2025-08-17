@@ -13,6 +13,7 @@ import SellerProfile from "./pages/SellerProfile";
 import TrackOrders from "./pages/TrackOrders";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
+import BookMarketplace from "./pages/BookMarketplace";
 import NotFound from "./pages/NotFound";
 import { SupportChat } from "./components/support/SupportChat";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -70,6 +71,11 @@ const App = () => (
           <Route path="/admin-dashboard" element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/books" element={
+            <ProtectedRoute>
+              <BookMarketplace />
             </ProtectedRoute>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, User, Search, Plus, Store, Menu, Package, Settings } from 'lucide-react';
+import { ShoppingCart, User, Search, Plus, Store, Menu, Package, Settings, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -33,6 +33,12 @@ export function Header() {
             {user ? (
               <>
                 <NotificationCenter />
+                <Link to="/books">
+                  <Button variant="ghost" size="sm">
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Get Books
+                  </Button>
+                </Link>
                 <Link to="/dashboard">
                   <Button variant="ghost" size="sm">
                     <User className="h-4 w-4 mr-2" />
@@ -70,9 +76,13 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent>
-              <nav className="flex flex-col space-y-4 mt-8">
+                <nav className="flex flex-col space-y-4 mt-8">
                 {user ? (
                   <>
+                    <Link to="/books" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                      <BookOpen className="h-5 w-5" />
+                      <span>Get Books</span>
+                    </Link>
                     <Link to="/dashboard" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
                       <User className="h-5 w-5" />
                       <span>Dashboard</span>
