@@ -50,16 +50,31 @@ serve(async (req) => {
     // Create reference for Paystack
     const reference = `TDW${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
+    const paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY");
+    if (!paystackSecretKey) {
+      throw new Error("PAYSTACK_SECRET_KEY environment variable is not set");
+    }
+
+    // Get currency rates for global support
+    const { data: currencyData } = await supabaseAdmin
+      .from("currency_rates")
+      .select("rate")
+      .eq("target_currency", "NGN")
+      .single();
+    
+    const exchangeRate = currencyData?.rate || 1600;
+    const amountInNaira = totalAmount * exchangeRate;
+
     // Initialize Paystack payment
     const paystackResponse = await fetch("https://api.paystack.co/transaction/initialize", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${Deno.env.get("PAYSTACK_SECRET_KEY")}`,
+        "Authorization": `Bearer ${paystackSecretKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         email: user.email,
-        amount: totalAmount * 100, // Paystack expects amount in kobo
+        amount: Math.round(amountInNaira * 100), // Paystack expects amount in kobo
         reference,
         currency: "NGN",
         callback_url: `${req.headers.get("origin")}/payment-success`,

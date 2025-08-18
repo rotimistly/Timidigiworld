@@ -15,6 +15,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
 import BookMarketplace from "./pages/BookMarketplace";
 import NotFound from "./pages/NotFound";
+import { MessageCenter } from "./components/messaging/MessageCenter";
 import { SupportChat } from "./components/support/SupportChat";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -71,6 +72,11 @@ const App = () => (
           <Route path="/admin-dashboard" element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/messages" element={
+            <ProtectedRoute>
+              <MessageCenter />
             </ProtectedRoute>
           } />
           <Route path="/books" element={

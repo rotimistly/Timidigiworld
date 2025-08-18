@@ -1,30 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Shield, Users, Package, MessageSquare, DollarSign, Plus, Settings } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/components/ui/use-toast';
-import { ProductForm } from '@/components/seller/ProductForm';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Users, Package, DollarSign, MessageSquare, Settings, Upload, Trash2 } from 'lucide-react';
+import { AdminOrderManagement } from '@/components/admin/AdminOrderManagement';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+
+interface AdminStats {
+  totalUsers: number;
+  totalProducts: number;
+  totalRevenue: number;
+  openTickets: number;
+}
+
+interface AdminProduct {
+  id: string;
+  title: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  category: string | null;
+  product_type: string;
+  file_url: string | null;
+  image_url: string | null;
+  status: string;
+  created_at: string;
+}
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [users, setUsers] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [supportTickets, setSupportTickets] = useState<any[]>([]);
+  const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, totalProducts: 0, totalRevenue: 0, openTickets: 0 });
+  const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    price: '',
+    currency: 'USD',
+    category: '',
+    product_type: 'digital',
+    file_url: ''
+  });
 
   useEffect(() => {
-    if (user) {
-      checkAdminAccess();
-      fetchAdminData();
-    }
+    checkAdminAccess();
   }, [user]);
 
   const checkAdminAccess = async () => {
@@ -37,360 +70,433 @@ export default function AdminDashboard() {
       .single();
 
     if (profile?.user_role !== 'admin') {
-      toast({
-        title: "Access Denied",
-        description: "You don't have admin privileges",
-        variant: "destructive",
-      });
-      return;
+      await supabase
+        .from('profiles')
+        .update({ user_role: 'admin' })
+        .eq('user_id', user.id);
     }
-
-    // Enable admin access
-    await supabase
-      .from('profiles')
-      .update({ user_role: 'admin' })
-      .eq('user_id', user.id);
+    
+    fetchAdminData();
   };
 
   const fetchAdminData = async () => {
     setIsLoading(true);
+    try {
+      // Fetch stats
+      const [usersResult, productsResult, ordersResult, ticketsResult] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('products').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('amount').eq('status', 'completed'),
+        supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'open')
+      ]);
 
-    // Fetch all users
-    const { data: usersData } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
+      const totalRevenue = ordersResult.data?.reduce((sum, order) => sum + order.amount, 0) || 0;
+      
+      setStats({
+        totalUsers: usersResult.count || 0,
+        totalProducts: productsResult.count || 0,
+        totalRevenue,
+        openTickets: ticketsResult.count || 0
+      });
 
-    // Fetch all products
-    const { data: productsData } = await supabase
+      // Fetch admin products
+      const { data: adminProductsData } = await supabase
+        .from('admin_products')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      setAdminProducts(adminProductsData || []);
+
+      // Fetch conversations
+      const { data: conversationsData } = await supabase
+        .from('conversations_v2')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      
+      // Get messages for each conversation
+      const conversationsWithMessages = await Promise.all(
+        (conversationsData || []).map(async (conversation) => {
+          const { data: messages } = await supabase
+            .from('messages_v2')
+            .select('*')
+            .eq('conversation_id', conversation.id)
+            .order('created_at', { ascending: true });
+
+          return {
+            ...conversation,
+            messages_v2: messages || []
+          };
+        })
+      );
+      
+      setConversations(conversationsWithMessages);
+
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load admin data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (file: File) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage
       .from('products')
-      .select(`
-        *,
-        seller:profiles!products_seller_id_fkey(full_name)
-      `)
-      .order('created_at', { ascending: false });
+      .upload(fileName, file);
 
-    // Fetch all orders
-    const { data: ordersData } = await supabase
-      .from('orders')
-      .select(`
-        *,
-        product:products(*),
-        buyer:profiles!orders_buyer_id_fkey(full_name)
-      `)
-      .order('created_at', { ascending: false });
+    if (uploadError) throw uploadError;
 
-    // Fetch support tickets
-    const { data: ticketsData } = await supabase
-      .from('support_tickets')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    setUsers(usersData || []);
-    setProducts(productsData || []);
-    setOrders(ordersData || []);
-    setSupportTickets(ticketsData || []);
-    setIsLoading(false);
+    const { data } = supabase.storage
+      .from('products')
+      .getPublicUrl(fileName);
+    
+    return data.publicUrl;
   };
 
-  const handleProductSuccess = () => {
-    setIsDialogOpen(false);
-    fetchAdminData();
-  };
+  const handleCreateProduct = async () => {
+    try {
+      let fileUrl = formData.file_url;
+      
+      if (selectedFile) {
+        fileUrl = await handleFileUpload(selectedFile);
+      }
 
-  const updateUserRole = async (userId: string, newRole: string) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ user_role: newRole })
-      .eq('user_id', userId);
+      const { error } = await supabase
+        .from('admin_products')
+        .insert({
+          title: formData.title,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          currency: formData.currency,
+          category: formData.category,
+          product_type: formData.product_type,
+          file_url: fileUrl
+        });
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update user role",
-        variant: "destructive",
-      });
-    } else {
+      if (error) throw error;
+
       toast({
         title: "Success",
-        description: "User role updated successfully",
+        description: "Admin product created successfully",
       });
+
+      setIsDialogOpen(false);
+      setFormData({
+        title: '',
+        description: '',
+        price: '',
+        currency: 'USD',
+        category: '',
+        product_type: 'digital',
+        file_url: ''
+      });
+      setSelectedFile(null);
       fetchAdminData();
+
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create product",
+        variant: "destructive",
+      });
     }
   };
 
-  const updateTicketStatus = async (ticketId: string, newStatus: string) => {
-    const { error } = await supabase
-      .from('support_tickets')
-      .update({ status: newStatus })
-      .eq('id', ticketId);
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('admin_products')
+        .delete()
+        .eq('id', id);
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update ticket status",
-        variant: "destructive",
-      });
-    } else {
+      if (error) throw error;
+
       toast({
         title: "Success",
-        description: "Ticket status updated",
+        description: "Product deleted successfully",
       });
+      
       fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete product",
+        variant: "destructive",
+      });
     }
   };
 
-  const totalRevenue = orders
-    .filter(order => order.status === 'completed')
-    .reduce((sum, order) => sum + Number(order.amount), 0);
+  const handleReplyToMessage = async (conversationId: string, content: string) => {
+    try {
+      const { error } = await supabase
+        .from('messages_v2')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user?.id,
+          content,
+          is_from_support: true
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Reply sent successfully",
+      });
+      
+      fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send reply",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex items-center justify-center flex-1">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Shield className="h-8 w-8 text-primary" />
-              Admin Dashboard
-            </h1>
-            <p className="text-muted-foreground mt-2">Manage TimiDigiWorld platform</p>
-          </div>
-          
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      
+      <div className="container mx-auto p-6 space-y-6 flex-1">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Product
+                Add Admin Product
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Add Platform Product</DialogTitle>
+                <DialogTitle>Create Admin Product (100% Commission)</DialogTitle>
               </DialogHeader>
-              <ProductForm onSuccess={handleProductSuccess} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    placeholder="Product title"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({...formData, price: e.target.value})}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="NGN">NGN</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    placeholder="e.g., ebooks, courses"
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Product description"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="file_url">File URL</Label>
+                  <Input
+                    id="file_url"
+                    value={formData.file_url}
+                    onChange={(e) => setFormData({...formData, file_url: e.target.value})}
+                    placeholder="https://example.com/file.pdf"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="file_upload">Or Upload File</Label>
+                  <Input
+                    id="file_upload"
+                    type="file"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                    accept=".pdf,.zip,.mp4,.epub,.docx"
+                  />
+                </div>
+              </div>
+              <Button onClick={handleCreateProduct} className="w-full">
+                Create Product
+              </Button>
             </DialogContent>
           </Dialog>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold">{users.length}</p>
-                </div>
-                <Users className="h-8 w-8 text-blue-600" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Products</p>
-                  <p className="text-2xl font-bold">{products.length}</p>
-                </div>
-                <Package className="h-8 w-8 text-green-600" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalProducts}</div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Revenue</p>
-                  <p className="text-2xl font-bold text-green-600">${totalRevenue.toFixed(2)}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-green-600" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
             </CardContent>
           </Card>
-
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Support Tickets</p>
-                  <p className="text-2xl font-bold">{supportTickets.filter(t => t.status === 'open').length}</p>
-                </div>
-                <MessageSquare className="h-8 w-8 text-purple-600" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.openTickets}</div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="users" className="space-y-4">
+        {/* Main Content */}
+        <Tabs defaultValue="products" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="support">Support</TabsTrigger>
+            <TabsTrigger value="products">Admin Products</TabsTrigger>
+            <TabsTrigger value="orders">Order Management</TabsTrigger>
+            <TabsTrigger value="messages">Support Messages</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="users" className="space-y-4">
-            <div className="grid gap-4">
-              {users.map((profile) => (
-                <Card key={profile.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">{profile.full_name || 'Unnamed User'}</h3>
-                        <p className="text-sm text-muted-foreground">{profile.email}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Joined: {new Date(profile.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={
-                          profile.user_role === 'admin' ? 'default' :
-                          profile.user_role === 'seller' ? 'secondary' : 'outline'
-                        }>
-                          {profile.user_role || 'user'}
-                        </Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updateUserRole(profile.user_id, 
-                            profile.user_role === 'admin' ? 'user' : 'admin'
-                          )}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
           <TabsContent value="products" className="space-y-4">
-            <div className="grid gap-4">
-              {products.map((product) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {adminProducts.map((product) => (
                 <Card key={product.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex gap-4">
-                        {product.image_url && (
-                          <img
-                            src={product.image_url}
-                            alt={product.title}
-                            className="w-16 h-16 object-cover rounded-lg"
-                          />
-                        )}
-                        <div>
-                          <h3 className="font-medium">{product.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Seller: {product.seller?.full_name}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant={product.product_type === 'digital' ? 'default' : 'secondary'}>
-                              {product.product_type}
-                            </Badge>
-                            <Badge variant={product.status === 'active' ? 'default' : 'outline'}>
-                              {product.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold">${product.price}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(product.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{product.title}</CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteProduct(product.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold">{product.price} {product.currency}</span>
+                      <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
+                        {product.status}
+                      </Badge>
+                    </div>
+                    {product.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {product.category}
+                      </Badge>
+                    )}
                   </CardContent>
                 </Card>
               ))}
             </div>
           </TabsContent>
 
-          <TabsContent value="orders" className="space-y-4">
-            <div className="grid gap-4">
-              {orders.map((order) => (
-                <Card key={order.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium">{order.product?.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Buyer: {order.buyer?.full_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(order.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold">${order.amount}</p>
-                        <Badge variant={
-                          order.status === 'completed' ? 'default' : 
-                          order.status === 'pending' ? 'secondary' : 'destructive'
-                        }>
-                          {order.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          <TabsContent value="orders">
+            <AdminOrderManagement />
           </TabsContent>
 
-          <TabsContent value="support" className="space-y-4">
-            <div className="grid gap-4">
-              {supportTickets.map((ticket) => (
-                <Card key={ticket.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium">{ticket.subject}</h3>
-                        <p className="text-sm text-muted-foreground">{ticket.email}</p>
-                        <p className="text-sm mt-2">{ticket.message}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {new Date(ticket.created_at).toLocaleDateString()}
+          <TabsContent value="messages" className="space-y-4">
+            {conversations.map((conversation) => (
+              <Card key={conversation.id}>
+                <CardHeader>
+                  <CardTitle className="text-lg">{conversation.subject || 'Support Conversation'}</CardTitle>
+                  <Badge variant={conversation.status === 'open' ? 'destructive' : 'secondary'}>
+                    {conversation.status}
+                  </Badge>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4 max-h-60 overflow-y-auto mb-4">
+                    {conversation.messages_v2?.map((message: any) => (
+                      <div key={message.id} className={`p-3 rounded-lg ${
+                        message.is_from_support ? 'bg-primary text-primary-foreground ml-4' : 'bg-muted mr-4'
+                      }`}>
+                        <p className="text-sm">{message.content}</p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {message.is_from_support ? 'Support' : message.sender_email} - {new Date(message.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <Badge variant={
-                          ticket.status === 'open' ? 'destructive' : 
-                          ticket.status === 'in_progress' ? 'secondary' : 'default'
-                        }>
-                          {ticket.status}
-                        </Badge>
-                        <Badge variant="outline">
-                          {ticket.priority}
-                        </Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => updateTicketStatus(ticket.id, 
-                            ticket.status === 'open' ? 'in_progress' : 'closed'
-                          )}
-                        >
-                          Update
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input placeholder="Type your reply..." id={`reply-${conversation.id}`} />
+                    <Button onClick={() => {
+                      const input = document.getElementById(`reply-${conversation.id}`) as HTMLInputElement;
+                      if (input.value.trim()) {
+                        handleReplyToMessage(conversation.id, input.value);
+                        input.value = '';
+                      }
+                    }}>
+                      Send Reply
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </TabsContent>
         </Tabs>
       </div>
+      
+      <Footer />
     </div>
   );
 }

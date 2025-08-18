@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, User, Search, Plus, Store, Menu, Package, Settings, BookOpen } from 'lucide-react';
+import { ShoppingCart, User, Search, Plus, Store, Menu, Package, Settings, BookOpen, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -43,6 +43,12 @@ export function Header() {
                   <Button variant="ghost" size="sm">
                     <User className="h-4 w-4 mr-2" />
                     Dashboard
+                  </Button>
+                </Link>
+                <Link to="/messages">
+                  <Button variant="ghost" size="sm">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Messages
                   </Button>
                 </Link>
                 <Link to="/seller-dashboard">
@@ -87,14 +93,18 @@ export function Header() {
                       <User className="h-5 w-5" />
                       <span>Dashboard</span>
                     </Link>
-                    <Link to="/seller-dashboard" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
-                      <Plus className="h-5 w-5" />
-                      <span>Sell Products</span>
-                    </Link>
-                    <Link to="/seller-profile" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
-                      <Settings className="h-5 w-5" />
-                      <span>Seller Profile</span>
-                    </Link>
+                     <Link to="/messages" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                       <MessageSquare className="h-5 w-5" />
+                       <span>Messages</span>
+                     </Link>
+                     <Link to="/seller-dashboard" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                       <Plus className="h-5 w-5" />
+                       <span>Sell Products</span>
+                     </Link>
+                     <Link to="/seller-profile" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                       <Settings className="h-5 w-5" />
+                       <span>Seller Profile</span>
+                     </Link>
                     <Link to="/track-orders" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
                       <Package className="h-5 w-5" />
                       <span>Track Orders</span>
