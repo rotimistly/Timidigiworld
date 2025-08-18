@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          file_url: string | null
+          id: string
+          image_url: string | null
+          price: number
+          product_type: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          image_url?: string | null
+          price: number
+          product_type?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          image_url?: string | null
+          price?: number
+          product_type?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           amount: number
@@ -117,6 +162,60 @@ export type Database = {
           },
         ]
       }
+      conversations_v2: {
+        Row: {
+          created_at: string
+          id: string
+          is_support_ticket: boolean | null
+          status: string | null
+          subject: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_support_ticket?: boolean | null
+          status?: string | null
+          subject?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_support_ticket?: boolean | null
+          status?: string | null
+          subject?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      currency_rates: {
+        Row: {
+          base_currency: string
+          id: string
+          rate: number
+          target_currency: string
+          updated_at: string
+        }
+        Insert: {
+          base_currency?: string
+          id?: string
+          rate: number
+          target_currency: string
+          updated_at?: string
+        }
+        Update: {
+          base_currency?: string
+          id?: string
+          rate?: number
+          target_currency?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_performance_logs: {
         Row: {
           created_at: string | null
@@ -184,6 +283,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      messages_v2: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_from_support: boolean | null
+          sender_email: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_from_support?: boolean | null
+          sender_email?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_from_support?: boolean | null
+          sender_email?: string | null
+          sender_id?: string | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -345,6 +474,69 @@ export type Database = {
           },
         ]
       }
+      payment_splits: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          currency: string
+          id: string
+          payment_gateway: string | null
+          payment_reference: string | null
+          platform_amount: number
+          platform_paid: boolean | null
+          platform_percentage: number
+          provider_amount: number
+          provider_paid: boolean | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          platform_amount: number
+          platform_paid?: boolean | null
+          platform_percentage?: number
+          provider_amount: number
+          provider_paid?: boolean | null
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          platform_amount?: number
+          platform_paid?: boolean | null
+          platform_percentage?: number
+          provider_amount?: number
+          provider_paid?: boolean | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_splits_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "booking_history"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_splits_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_images: {
         Row: {
           created_at: string | null
@@ -461,6 +653,7 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
+          currency: string | null
           description: string | null
           file_url: string | null
           id: string
@@ -478,6 +671,7 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           file_url?: string | null
           id?: string
@@ -495,6 +689,7 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           file_url?: string | null
           id?: string
@@ -513,6 +708,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          about: string | null
           account_name: string | null
           account_number: string | null
           apple_calendar_token: string | null
@@ -522,26 +718,41 @@ export type Database = {
           bank_name: string | null
           bio: string | null
           business_name: string | null
+          certifications: string[] | null
+          commission_rate: number | null
+          contact_phone: string | null
           created_at: string
+          currency: string | null
+          education: string | null
           full_name: string | null
           google_calendar_token: string | null
           hourly_rate: number | null
           id: string
           is_provider: boolean | null
           is_seller: boolean | null
+          languages: string[] | null
           location: string | null
           payment_methods: string[] | null
           paystack_subaccount_code: string | null
           phone: string | null
+          portfolio_urls: string[] | null
+          preferred_currency: string | null
+          preferred_payment_method: string | null
+          product_view_preference: string | null
+          profile_image_url: string | null
           provider_phone: string | null
           region: string | null
+          skills: string[] | null
+          social_links: Json | null
           specialties: string[] | null
           updated_at: string
           user_id: string
           user_role: string | null
+          website_url: string | null
           years_experience: number | null
         }
         Insert: {
+          about?: string | null
           account_name?: string | null
           account_number?: string | null
           apple_calendar_token?: string | null
@@ -551,26 +762,41 @@ export type Database = {
           bank_name?: string | null
           bio?: string | null
           business_name?: string | null
+          certifications?: string[] | null
+          commission_rate?: number | null
+          contact_phone?: string | null
           created_at?: string
+          currency?: string | null
+          education?: string | null
           full_name?: string | null
           google_calendar_token?: string | null
           hourly_rate?: number | null
           id?: string
           is_provider?: boolean | null
           is_seller?: boolean | null
+          languages?: string[] | null
           location?: string | null
           payment_methods?: string[] | null
           paystack_subaccount_code?: string | null
           phone?: string | null
+          portfolio_urls?: string[] | null
+          preferred_currency?: string | null
+          preferred_payment_method?: string | null
+          product_view_preference?: string | null
+          profile_image_url?: string | null
           provider_phone?: string | null
           region?: string | null
+          skills?: string[] | null
+          social_links?: Json | null
           specialties?: string[] | null
           updated_at?: string
           user_id: string
           user_role?: string | null
+          website_url?: string | null
           years_experience?: number | null
         }
         Update: {
+          about?: string | null
           account_name?: string | null
           account_number?: string | null
           apple_calendar_token?: string | null
@@ -580,23 +806,37 @@ export type Database = {
           bank_name?: string | null
           bio?: string | null
           business_name?: string | null
+          certifications?: string[] | null
+          commission_rate?: number | null
+          contact_phone?: string | null
           created_at?: string
+          currency?: string | null
+          education?: string | null
           full_name?: string | null
           google_calendar_token?: string | null
           hourly_rate?: number | null
           id?: string
           is_provider?: boolean | null
           is_seller?: boolean | null
+          languages?: string[] | null
           location?: string | null
           payment_methods?: string[] | null
           paystack_subaccount_code?: string | null
           phone?: string | null
+          portfolio_urls?: string[] | null
+          preferred_currency?: string | null
+          preferred_payment_method?: string | null
+          product_view_preference?: string | null
+          profile_image_url?: string | null
           provider_phone?: string | null
           region?: string | null
+          skills?: string[] | null
+          social_links?: Json | null
           specialties?: string[] | null
           updated_at?: string
           user_id?: string
           user_role?: string | null
+          website_url?: string | null
           years_experience?: number | null
         }
         Relationships: []
@@ -945,6 +1185,10 @@ export type Database = {
           updated_at: string
           user_id: string
         }[]
+      }
+      get_currency_for_region: {
+        Args: { region_code: string }
+        Returns: string
       }
       get_user_role: {
         Args: { user_id: string }
