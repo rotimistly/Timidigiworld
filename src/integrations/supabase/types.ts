@@ -403,6 +403,38 @@ export type Database = {
           },
         ]
       }
+      order_tracking_history: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          order_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_id: string
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_tracking_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           amount: number
@@ -569,6 +601,50 @@ export type Database = {
           },
         ]
       }
+      product_messages: {
+        Row: {
+          buyer_id: string
+          content: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          product_id: string
+          seller_id: string
+          sender_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          buyer_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          product_id: string
+          seller_id: string
+          sender_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          product_id?: string
+          seller_id?: string
+          sender_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_messages_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           comment: string | null
@@ -655,6 +731,8 @@ export type Database = {
           created_at: string
           currency: string | null
           description: string | null
+          file_size: number | null
+          file_type: string | null
           file_url: string | null
           id: string
           image_url: string | null
@@ -673,6 +751,8 @@ export type Database = {
           created_at?: string
           currency?: string | null
           description?: string | null
+          file_size?: number | null
+          file_type?: string | null
           file_url?: string | null
           id?: string
           image_url?: string | null
@@ -691,6 +771,8 @@ export type Database = {
           created_at?: string
           currency?: string | null
           description?: string | null
+          file_size?: number | null
+          file_type?: string | null
           file_url?: string | null
           id?: string
           image_url?: string | null
@@ -714,12 +796,14 @@ export type Database = {
           apple_calendar_token: string | null
           availability_status: string | null
           avatar_url: string | null
+          average_rating: number | null
           bank_code: string | null
           bank_name: string | null
           bio: string | null
           business_name: string | null
           certifications: string[] | null
           commission_rate: number | null
+          completed_bookings: number | null
           contact_phone: string | null
           created_at: string
           currency: string | null
@@ -728,8 +812,12 @@ export type Database = {
           google_calendar_token: string | null
           hourly_rate: number | null
           id: string
+          identity_document_type: string | null
+          identity_document_url: string | null
+          identity_verified: boolean | null
           is_provider: boolean | null
           is_seller: boolean | null
+          is_verified: boolean | null
           languages: string[] | null
           location: string | null
           payment_methods: string[] | null
@@ -745,9 +833,11 @@ export type Database = {
           skills: string[] | null
           social_links: Json | null
           specialties: string[] | null
+          total_reviews: number | null
           updated_at: string
           user_id: string
           user_role: string | null
+          verification_date: string | null
           website_url: string | null
           years_experience: number | null
         }
@@ -758,12 +848,14 @@ export type Database = {
           apple_calendar_token?: string | null
           availability_status?: string | null
           avatar_url?: string | null
+          average_rating?: number | null
           bank_code?: string | null
           bank_name?: string | null
           bio?: string | null
           business_name?: string | null
           certifications?: string[] | null
           commission_rate?: number | null
+          completed_bookings?: number | null
           contact_phone?: string | null
           created_at?: string
           currency?: string | null
@@ -772,8 +864,12 @@ export type Database = {
           google_calendar_token?: string | null
           hourly_rate?: number | null
           id?: string
+          identity_document_type?: string | null
+          identity_document_url?: string | null
+          identity_verified?: boolean | null
           is_provider?: boolean | null
           is_seller?: boolean | null
+          is_verified?: boolean | null
           languages?: string[] | null
           location?: string | null
           payment_methods?: string[] | null
@@ -789,9 +885,11 @@ export type Database = {
           skills?: string[] | null
           social_links?: Json | null
           specialties?: string[] | null
+          total_reviews?: number | null
           updated_at?: string
           user_id: string
           user_role?: string | null
+          verification_date?: string | null
           website_url?: string | null
           years_experience?: number | null
         }
@@ -802,12 +900,14 @@ export type Database = {
           apple_calendar_token?: string | null
           availability_status?: string | null
           avatar_url?: string | null
+          average_rating?: number | null
           bank_code?: string | null
           bank_name?: string | null
           bio?: string | null
           business_name?: string | null
           certifications?: string[] | null
           commission_rate?: number | null
+          completed_bookings?: number | null
           contact_phone?: string | null
           created_at?: string
           currency?: string | null
@@ -816,8 +916,12 @@ export type Database = {
           google_calendar_token?: string | null
           hourly_rate?: number | null
           id?: string
+          identity_document_type?: string | null
+          identity_document_url?: string | null
+          identity_verified?: boolean | null
           is_provider?: boolean | null
           is_seller?: boolean | null
+          is_verified?: boolean | null
           languages?: string[] | null
           location?: string | null
           payment_methods?: string[] | null
@@ -833,9 +937,11 @@ export type Database = {
           skills?: string[] | null
           social_links?: Json | null
           specialties?: string[] | null
+          total_reviews?: number | null
           updated_at?: string
           user_id?: string
           user_role?: string | null
+          verification_date?: string | null
           website_url?: string | null
           years_experience?: number | null
         }
@@ -1159,6 +1265,10 @@ export type Database = {
       }
     }
     Functions: {
+      clear_pending_tracking_history: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
       get_booking_history_for_user: {
         Args: { user_uuid: string }
         Returns: {
