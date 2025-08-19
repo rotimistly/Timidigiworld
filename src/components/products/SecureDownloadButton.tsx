@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, AlertCircle } from "lucide-react";
+import { Download, AlertCircle, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -12,6 +12,7 @@ interface SecureDownloadButtonProps {
 
 export const SecureDownloadButton = ({ orderId, productTitle, className }: SecureDownloadButtonProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [fileUrl, setFileUrl] = useState<string>("");
 
   const handleSecureDownload = async () => {
     setIsDownloading(true);
@@ -38,6 +39,9 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
         toast.error("Download file not available.");
         return;
       }
+
+      // Store file URL for viewing option
+      setFileUrl(file_url);
 
       // Create and trigger direct file download with proper content handling
       try {
@@ -76,8 +80,8 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
           else extension = 'file';
         }
         
-        // Create a new blob with the correct MIME type to ensure proper viewing
-        const correctedBlob = new Blob([blob], { type: contentType });
+        // Force PDF format for downloads while preserving content
+        const correctedBlob = new Blob([blob], { type: 'application/pdf' });
         
         // Clean filename for compatibility across devices
         const cleanTitle = productTitle
@@ -85,7 +89,7 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
           .replace(/\s+/g, '_') // Replace spaces with underscores
           .substring(0, 100); // Limit length
         
-        const fileName = `${cleanTitle}.${extension}`;
+        const fileName = `${cleanTitle}.pdf`; // Force PDF extension
         
         // Create download link
         const url = window.URL.createObjectURL(correctedBlob);
@@ -110,16 +114,16 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
           window.URL.revokeObjectURL(url);
         }, 100);
         
-        toast.success(`📥 ${productTitle} downloaded successfully! Check your downloads folder.`);
+        toast.success(`📥 ${productTitle} downloaded as PDF! Check your downloads folder.`);
         
       } catch (downloadError) {
         console.error('Download error:', downloadError);
         
-        // Enhanced fallback - try direct link approach
+        // Enhanced fallback - try direct link approach with PDF extension
         try {
           const link = document.createElement('a');
           link.href = file_url;
-          link.download = `${productTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.${file_url.split('.').pop() || 'file'}`;
+          link.download = `${productTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.pdf`;
           link.target = '_blank';
           link.rel = 'noopener noreferrer';
           
@@ -127,7 +131,7 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
           link.click();
           document.body.removeChild(link);
           
-          toast.success("📱 Opening your product file...");
+          toast.success("📱 PDF download started...");
         } catch (fallbackError) {
           console.error('Fallback download failed:', fallbackError);
           // Last resort - open in new window
@@ -144,24 +148,47 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
     }
   };
 
+  const handleViewOnline = () => {
+    if (fileUrl) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+      toast.success("Opening file for viewing...");
+    } else {
+      toast.error("Please download the file first to get access.");
+    }
+  };
+
   return (
-    <Button
-      onClick={handleSecureDownload}
-      disabled={isDownloading}
-      className={className}
-      size="sm"
-    >
-      {isDownloading ? (
-        <>
-          <AlertCircle className="w-4 h-4 mr-2 animate-spin" />
-          Preparing...
-        </>
-      ) : (
-        <>
-          <Download className="w-4 h-4 mr-2" />
-          Download {productTitle}
-        </>
+    <div className="flex gap-2">
+      <Button
+        onClick={handleSecureDownload}
+        disabled={isDownloading}
+        className={className}
+        size="sm"
+      >
+        {isDownloading ? (
+          <>
+            <AlertCircle className="w-4 h-4 mr-2 animate-spin" />
+            Preparing...
+          </>
+        ) : (
+          <>
+            <Download className="w-4 h-4 mr-2" />
+            Download PDF
+          </>
+        )}
+      </Button>
+      
+      {fileUrl && (
+        <Button
+          onClick={handleViewOnline}
+          variant="outline"
+          size="sm"
+          className="ml-2"
+        >
+          <Eye className="w-4 h-4 mr-2" />
+          View Online
+        </Button>
       )}
-    </Button>
+    </div>
   );
 };
