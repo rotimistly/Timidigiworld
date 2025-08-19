@@ -121,10 +121,10 @@ serve(async (req) => {
         .from("orders")
         .update({ 
           tracking_number: trackingNumber,
-          status: "processing" 
+          status: "completed" 
         })
         .eq("id", orderWithProduct.id);
-      finalStatus = "processing";
+      finalStatus = "completed";
 
       // Create notification for tracking
       const { error: notificationError } = await supabaseAdmin.from("order_notifications").insert({
