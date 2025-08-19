@@ -28,7 +28,7 @@ export function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
         .from('profiles')
         .select('user_role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       setIsAdmin(profile?.user_role === 'admin');
     } catch (error) {

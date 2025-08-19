@@ -32,6 +32,17 @@ export default function AdminAuth() {
       return;
     }
 
+    // Only allow specific admin emails
+    const allowedAdminEmails = ['rotimistly@gmail.com'];
+    if (!allowedAdminEmails.includes(formData.email.toLowerCase())) {
+      toast({
+        title: "Access Denied",
+        description: "This email is not authorized for admin access.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -91,7 +102,7 @@ export default function AdminAuth() {
         .from('profiles')
         .select('user_role')
         .eq('user_id', data.user?.id)
-        .single();
+        .maybeSingle();
 
       if (profile?.user_role !== 'admin') {
         await supabase.auth.signOut();
@@ -146,7 +157,7 @@ export default function AdminAuth() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      placeholder="admin@example.com"
+                      placeholder="rotimistly@gmail.com"
                       required
                     />
                   </div>
@@ -200,7 +211,7 @@ export default function AdminAuth() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      placeholder="admin@example.com"
+                      placeholder="rotimistly@gmail.com"
                       required
                     />
                   </div>

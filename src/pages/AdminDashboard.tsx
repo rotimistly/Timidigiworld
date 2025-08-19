@@ -67,7 +67,7 @@ export default function AdminDashboard() {
       .from('profiles')
       .select('user_role')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (profile?.user_role !== 'admin') {
       // Redirect to admin auth if not admin
