@@ -118,8 +118,8 @@ export default function SellerDashboard() {
   };
 
   const totalRevenue = orders
-    .filter(order => order.status === 'completed')
-    .reduce((sum, order) => sum + Number(order.amount), 0);
+    .filter(order => ['completed', 'delivered', 'shipped'].includes(order.status))
+    .reduce((sum, order) => sum + Number(order.seller_amount || order.amount), 0);
 
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
   const totalProducts = products.length;
