@@ -1263,6 +1263,105 @@ export type Database = {
           },
         ]
       }
+      safe_profiles: {
+        Row: {
+          about: string | null
+          availability_status: string | null
+          avatar_url: string | null
+          average_rating: number | null
+          bio: string | null
+          certifications: string[] | null
+          completed_bookings: number | null
+          created_at: string | null
+          currency: string | null
+          education: string | null
+          full_name: string | null
+          hourly_rate: number | null
+          id: string | null
+          is_provider: boolean | null
+          is_seller: boolean | null
+          is_verified: boolean | null
+          languages: string[] | null
+          location: string | null
+          portfolio_urls: string[] | null
+          preferred_currency: string | null
+          profile_image_url: string | null
+          region: string | null
+          skills: string[] | null
+          specialties: string[] | null
+          total_reviews: number | null
+          updated_at: string | null
+          user_id: string | null
+          user_role: string | null
+          website_url: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          about?: string | null
+          availability_status?: string | null
+          avatar_url?: string | null
+          average_rating?: number | null
+          bio?: string | null
+          certifications?: string[] | null
+          completed_bookings?: number | null
+          created_at?: string | null
+          currency?: string | null
+          education?: string | null
+          full_name?: string | null
+          hourly_rate?: number | null
+          id?: string | null
+          is_provider?: boolean | null
+          is_seller?: boolean | null
+          is_verified?: boolean | null
+          languages?: string[] | null
+          location?: string | null
+          portfolio_urls?: string[] | null
+          preferred_currency?: string | null
+          profile_image_url?: string | null
+          region?: string | null
+          skills?: string[] | null
+          specialties?: string[] | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_role?: string | null
+          website_url?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          about?: string | null
+          availability_status?: string | null
+          avatar_url?: string | null
+          average_rating?: number | null
+          bio?: string | null
+          certifications?: string[] | null
+          completed_bookings?: number | null
+          created_at?: string | null
+          currency?: string | null
+          education?: string | null
+          full_name?: string | null
+          hourly_rate?: number | null
+          id?: string | null
+          is_provider?: boolean | null
+          is_seller?: boolean | null
+          is_verified?: boolean | null
+          languages?: string[] | null
+          location?: string | null
+          portfolio_urls?: string[] | null
+          preferred_currency?: string | null
+          profile_image_url?: string | null
+          region?: string | null
+          skills?: string[] | null
+          specialties?: string[] | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_role?: string | null
+          website_url?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       clear_pending_tracking_history: {
@@ -1299,6 +1398,13 @@ export type Database = {
       get_currency_for_region: {
         Args: { region_code: string }
         Returns: string
+      }
+      get_digital_product_access: {
+        Args: { order_uuid: string }
+        Returns: {
+          file_url: string
+          product_title: string
+        }[]
       }
       get_user_role: {
         Args: { user_id: string }
