@@ -18,6 +18,8 @@ import NotFound from "./pages/NotFound";
 import { MessageCenter } from "./components/messaging/MessageCenter";
 import { SupportChat } from "./components/support/SupportChat";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
+import AdminAuth from "./pages/AdminAuth";
 
 const queryClient = new QueryClient();
 
@@ -69,10 +71,11 @@ const App = () => (
             </ProtectedRoute>
           } />
           <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/admin-auth" element={<AdminAuth />} />
           <Route path="/admin-dashboard" element={
-            <ProtectedRoute>
+            <AdminProtectedRoute>
               <AdminDashboard />
-            </ProtectedRoute>
+            </AdminProtectedRoute>
           } />
           <Route path="/messages" element={
             <ProtectedRoute>

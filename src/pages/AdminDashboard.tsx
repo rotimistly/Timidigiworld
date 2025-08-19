@@ -70,10 +70,9 @@ export default function AdminDashboard() {
       .single();
 
     if (profile?.user_role !== 'admin') {
-      await supabase
-        .from('profiles')
-        .update({ user_role: 'admin' })
-        .eq('user_id', user.id);
+      // Redirect to admin auth if not admin
+      window.location.href = '/admin-auth';
+      return;
     }
     
     fetchAdminData();
