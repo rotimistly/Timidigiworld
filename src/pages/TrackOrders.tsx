@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Package, Truck, CheckCircle, Clock, X } from 'lucide-react';
+import { Search, Package, Truck, CheckCircle, Clock, X, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +33,7 @@ export default function TrackOrders() {
   const [loading, setLoading] = useState(true);
   const [searchTracking, setSearchTracking] = useState('');
   const [searchResult, setSearchResult] = useState<Order | null>(null);
+  const [deletingOrders, setDeletingOrders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) {
@@ -104,6 +105,44 @@ export default function TrackOrders() {
         title: "Error",
         description: error.message,
         variant: "destructive",
+      });
+    }
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    setDeletingOrders(prev => new Set(prev).add(orderId));
+    
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Remove the order from the local state
+      setOrders(prev => prev.filter(order => order.id !== orderId));
+      
+      // Also remove from search result if it matches
+      if (searchResult?.id === orderId) {
+        setSearchResult(null);
+      }
+
+      toast({
+        title: "Order deleted",
+        description: "Your pending order has been successfully deleted.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to delete order: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingOrders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        return newSet;
       });
     }
   };
@@ -190,6 +229,17 @@ export default function TrackOrders() {
                   orderId={order.id}
                   productTitle={order.product.title}
                 />
+              )}
+              {order.status === 'pending' && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteOrder(order.id)}
+                  disabled={deletingOrders.has(order.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {deletingOrders.has(order.id) ? 'Deleting...' : 'Delete'}
+                </Button>
               )}
             </div>
           </div>
