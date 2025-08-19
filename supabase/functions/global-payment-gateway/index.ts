@@ -11,8 +11,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log("Payment gateway request received");
+  
   try {
     const { productId, paymentMethod, amount, deliveryEmail, currency = 'USD', country = 'US' } = await req.json();
+    console.log("Request data:", { productId, paymentMethod, amount, deliveryEmail, currency, country });
 
     // Create Supabase client for user auth
     const authHeader = req.headers.get("Authorization")!;
@@ -89,10 +92,15 @@ serve(async (req) => {
     if (currency === 'NGN' || country === 'NG') {
       // Use Paystack for Nigerian payments
       const paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY");
+      console.log("Paystack key available:", !!paystackSecretKey);
+      
       if (!paystackSecretKey) {
-        throw new Error("Paystack configuration not available");
+        console.error("PAYSTACK_SECRET_KEY not configured");
+        throw new Error("Paystack configuration not available - please contact support");
       }
 
+      console.log("Initializing Paystack payment...");
+      
       paymentResponse = await fetch("https://api.paystack.co/transaction/initialize", {
         method: "POST",
         headers: {
@@ -116,9 +124,11 @@ serve(async (req) => {
       });
 
       const paystackData = await paymentResponse.json();
+      console.log("Paystack response:", paystackData);
       
       if (!paystackData.status) {
-        throw new Error(paystackData.message || "Payment initialization failed");
+        console.error("Paystack error:", paystackData);
+        throw new Error(paystackData.message || "Payment initialization failed with Paystack");
       }
 
       // Create order record
