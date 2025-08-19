@@ -50,7 +50,7 @@ serve(async (req) => {
     const sellerAmount = totalAmount - commissionAmount;
 
     // Create reference for Paystack
-    const reference = `TDW${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+    const reference = `TDW${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
     const paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY");
     if (!paystackSecretKey) {

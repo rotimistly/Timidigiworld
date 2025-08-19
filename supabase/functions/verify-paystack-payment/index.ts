@@ -69,7 +69,7 @@ serve(async (req) => {
       });
     } else {
       // For physical products, generate tracking number
-      const trackingNumber = `TDW${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      const trackingNumber = `TDW${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
       await supabaseAdmin
         .from("orders")
         .update({ 
