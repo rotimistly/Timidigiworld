@@ -25,17 +25,22 @@ serve(async (req) => {
 
     console.log("Processing digital product delivery for order:", orderId);
 
-    // Get order details first
-    const { data: order, error: orderError } = await supabaseAdmin
+    // Get order details with buyer information
+    const { data: orderWithBuyer, error: orderError } = await supabaseAdmin
       .from("orders")
-      .select("*")
+      .select(`
+        *,
+        buyer:profiles!buyer_id(full_name, email)
+      `)
       .eq("id", orderId)
       .single();
 
-    if (orderError || !order) {
+    if (orderError || !orderWithBuyer) {
       console.error("Order not found:", orderError);
       throw new Error("Order not found");
     }
+
+    const order = orderWithBuyer;
 
     // Get product details separately
     const { data: product, error: productError } = await supabaseAdmin
@@ -54,16 +59,12 @@ serve(async (req) => {
       throw new Error("This endpoint is only for digital products");
     }
 
-    // Get buyer profile for additional email/name info
-    const { data: buyerProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("full_name, email")
-      .eq("user_id", order.buyer_id)
-      .single();
-
-    // Get buyer email - priority: delivery_email > auth email > profile email
+    // Get buyer profile for additional email/name info - use buyer relation first
     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(order.buyer_id);
-    const buyerEmail = order.delivery_email || authUser.user?.email || buyerProfile?.email;
+    
+    // Priority: delivery_email > buyer profile email > auth email
+    const buyerEmail = order.delivery_email || order.buyer?.email || authUser.user?.email;
+    const buyerName = order.buyer?.full_name || 'Customer';
 
     if (!buyerEmail) {
       console.error("No buyer email found for order:", orderId);
@@ -84,24 +85,35 @@ serve(async (req) => {
       to: [buyerEmail],
       subject: `Your Digital Product: ${product.title}`,
       html: `
-        <h1>Thank you for your purchase!</h1>
-        <p>Hi ${buyerProfile?.full_name || 'Customer'},</p>
-        <p>Your digital product "${product.title}" is ready for download.</p>
-        
-        ${product.file_url ? 
-          `<p><a href="${product.file_url}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Download Your Product</a></p>` :
-          '<p>Your product will be available for download shortly.</p>'
-        }
-        
-        <p><strong>Order Details:</strong></p>
-        <ul>
-          <li>Product: ${product.title}</li>
-          <li>Amount: $${order.amount}</li>
-          <li>Order ID: ${order.id}</li>
-        </ul>
-        
-        <p>If you have any issues, please contact our support team at Rotimistly@gmail.com or 08147838934.</p>
-        <p>Best regards,<br>TimiDigiWorld Team</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">Thank you for your purchase!</h1>
+          <p>Hi ${buyerName},</p>
+          <p>Your digital product "<strong>${product.title}</strong>" is ready for download.</p>
+          
+          ${product.file_url ? 
+            `<div style="text-align: center; margin: 30px 0;">
+              <a href="${product.file_url}" 
+                 style="background: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;"
+                 download>
+                📥 Download Your Product
+              </a>
+            </div>` :
+            '<p style="color: #ff6b6b;">Your product will be available for download shortly.</p>'
+          }
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #333; margin-top: 0;">Order Details:</h3>
+            <ul style="list-style: none; padding: 0;">
+              <li><strong>Product:</strong> ${product.title}</li>
+              <li><strong>Amount:</strong> $${order.amount}</li>
+              <li><strong>Order ID:</strong> ${order.id}</li>
+              <li><strong>Purchase Date:</strong> ${new Date(order.created_at).toLocaleDateString()}</li>
+            </ul>
+          </div>
+          
+          <p style="color: #666; font-size: 14px;">If you have any issues downloading or accessing your product, please contact our support team at <a href="mailto:Rotimistly@gmail.com">Rotimistly@gmail.com</a> or call 08147838934.</p>
+          <p style="color: #333; margin-top: 30px;">Best regards,<br><strong>TimiDigiWorld Team</strong></p>
+        </div>
       `,
     });
 

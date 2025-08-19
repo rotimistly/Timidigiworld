@@ -39,15 +39,15 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
         return;
       }
 
-      // Create a secure download link that opens in a new tab
-      const downloadWindow = window.open('', '_blank', 'noopener,noreferrer');
-      if (downloadWindow) {
-        downloadWindow.location.href = file_url;
-        toast.success("Download started!");
-      } else {
-        // Fallback for popup blockers
-        window.location.href = file_url;
-      }
+      // Create and trigger a download
+      const link = document.createElement('a');
+      link.href = file_url;
+      link.download = `${productTitle.replace(/[^a-zA-Z0-9]/g, '_')}.${file_url.split('.').pop() || 'file'}`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Download started!");
 
     } catch (error: any) {
       console.error('Secure download error:', error);
