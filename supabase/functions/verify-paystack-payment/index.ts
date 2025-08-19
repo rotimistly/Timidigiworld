@@ -75,29 +75,14 @@ serve(async (req) => {
       throw new Error("Product not found");
     }
 
-    // Update order status
-    const { data: updatedOrder, error: updateError } = await supabaseAdmin
-      .from("orders")
-      .update({ 
-        status: "paid",
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", order.id)
-      .select("*")
-      .single();
-
-    if (updateError || !updatedOrder) {
-      console.error("Failed to update order:", updateError);
-      throw new Error("Failed to update order status");
-    }
-
-    // Combine order with product data
+    // Prepare combined order and status without forcing an intermediate 'paid' state
     const orderWithProduct = {
-      ...updatedOrder,
-      product: product
+      ...order,
+      product
     };
+    let finalStatus = order.status;
 
-    console.log("Order updated successfully:", orderWithProduct.id, "Product type:", product.product_type);
+    console.log("Order loaded successfully:", orderWithProduct.id, "Product type:", product.product_type);
 
     // Process based on product type
     if (product.product_type === "digital") {
@@ -126,6 +111,7 @@ serve(async (req) => {
           email_sent: true
         })
         .eq("id", orderWithProduct.id);
+      finalStatus = "completed";
 
     } else {
       console.log("Processing physical product");
@@ -138,6 +124,7 @@ serve(async (req) => {
           status: "processing" 
         })
         .eq("id", orderWithProduct.id);
+      finalStatus = "processing";
 
       // Create notification for tracking
       const { error: notificationError } = await supabaseAdmin.from("order_notifications").insert({
@@ -158,9 +145,9 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true,
       orderId: orderWithProduct.id,
-      status: orderWithProduct.status,
+      status: finalStatus,
       productType: product.product_type,
-      order: orderWithProduct
+      order: { ...orderWithProduct, status: finalStatus }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
