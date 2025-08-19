@@ -39,15 +39,53 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
         return;
       }
 
-      // Create and trigger a download
-      const link = document.createElement('a');
-      link.href = file_url;
-      link.download = `${productTitle.replace(/[^a-zA-Z0-9]/g, '_')}.${file_url.split('.').pop() || 'file'}`;
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success("Download started!");
+      // Create and trigger direct file download
+      try {
+        // For mobile devices, we need to handle downloads differently
+        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+          // For mobile, fetch the file and create a blob for download
+          const response = await fetch(file_url);
+          const blob = await response.blob();
+          
+          const link = document.createElement('a');
+          const url = window.URL.createObjectURL(blob);
+          link.href = url;
+          
+          // Get file extension from URL or default based on content type
+          const urlParts = file_url.split('.');
+          const extension = urlParts.length > 1 ? urlParts.pop() : 
+                          blob.type.includes('pdf') ? 'pdf' : 
+                          blob.type.includes('image') ? 'jpg' : 'file';
+          
+          link.download = `${productTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.${extension}`;
+          link.style.display = 'none';
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up the blob URL
+          window.URL.revokeObjectURL(url);
+          toast.success(`${productTitle} downloaded to your device!`);
+        } else {
+          // For desktop, use direct download
+          const link = document.createElement('a');
+          link.href = file_url;
+          link.download = `${productTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.${file_url.split('.').pop() || 'file'}`;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success(`${productTitle} download started!`);
+        }
+      } catch (downloadError) {
+        console.error('Download error:', downloadError);
+        // Fallback to opening in new tab
+        window.open(file_url, '_blank', 'noopener,noreferrer');
+        toast.success("Opening your product file...");
+      }
 
     } catch (error: any) {
       console.error('Secure download error:', error);
