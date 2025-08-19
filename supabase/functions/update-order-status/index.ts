@@ -14,18 +14,33 @@ serve(async (req) => {
   try {
     const { orderId, status, trackingNumber } = await req.json();
 
+    // Get user from auth header for authorization
+    const authHeader = req.headers.get("Authorization")!;
+    if (!authHeader) {
+      throw new Error("Authorization header required");
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (!user) throw new Error("User not authenticated");
+
     // Create Supabase admin client
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get order details
+    // Get order details with seller information for authorization
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .select(`
         *,
-        product:products(title),
+        product:products!inner(title, seller_id),
         buyer:profiles!orders_buyer_id_fkey(full_name)
       `)
       .eq("id", orderId)
@@ -33,6 +48,13 @@ serve(async (req) => {
 
     if (orderError || !order) {
       throw new Error("Order not found");
+    }
+
+    // Check if user is authorized to update this order (seller or buyer)
+    const isAuthorized = order.buyer_id === user.id || order.product.seller_id === user.id;
+    
+    if (!isAuthorized) {
+      throw new Error("Unauthorized to update this order");
     }
 
     const updateData: any = { status };

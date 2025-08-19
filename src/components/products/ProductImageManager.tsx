@@ -181,7 +181,10 @@ export function ProductImageManager({ productId, currentImages, onImagesUpdate }
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={() => window.open(image, '_blank')}
+                      onClick={() => {
+                        const newWindow = window.open(image, '_blank');
+                        if (newWindow) newWindow.opener = null;
+                      }}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>

@@ -104,7 +104,7 @@ serve(async (req) => {
           amount: Math.round(convertedAmount * 100), // Paystack expects amount in kobo
           reference,
           currency: "NGN",
-          callback_url: `${req.headers.get("origin")}/payment-success`,
+          callback_url: `https://qozthicyahnfsewsehys.supabase.co/functions/v1/verify-paystack-payment`,
           metadata: {
             productId,
             userId: user.id,
