@@ -209,8 +209,19 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error("Error in global-payment-gateway function:", error);
+    
+    // Provide more specific error messages
+    let errorMessage = error.message;
+    if (error.message.includes("Invalid key") || error.message.includes("authentication")) {
+      errorMessage = "Payment service temporarily unavailable. Please try again later or contact support.";
+    } else if (error.message.includes("Product not found")) {
+      errorMessage = "The selected product is no longer available.";
+    } else if (error.message.includes("User not authenticated")) {
+      errorMessage = "Please log in to complete your purchase.";
+    }
+    
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: errorMessage 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

@@ -68,9 +68,21 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
       }
 
     } catch (error: any) {
+      console.error("Payment error:", error);
+      let errorMessage = error.message || "Payment processing failed";
+      
+      // Provide user-friendly error messages
+      if (errorMessage.includes("Payment service temporarily unavailable")) {
+        errorMessage = "Payment service is temporarily unavailable. Please try again in a few minutes or contact support.";
+      } else if (errorMessage.includes("Product not found")) {
+        errorMessage = "This product is no longer available for purchase.";
+      } else if (errorMessage.includes("authentication")) {
+        errorMessage = "Please log out and log back in, then try again.";
+      }
+      
       toast({
         title: "Payment Failed",
-        description: error.message || "Payment processing failed",
+        description: errorMessage,
         variant: "destructive",
       });
       setIsProcessing(false);
