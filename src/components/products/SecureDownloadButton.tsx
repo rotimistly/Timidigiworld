@@ -39,36 +39,84 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
         return;
       }
 
-      // Create and trigger direct file download
+      // Create and trigger direct file download with proper content handling
       try {
-        // For mobile devices, we need to handle downloads differently
-        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-          // For mobile, fetch the file and create a blob for download
-          const response = await fetch(file_url);
-          const blob = await response.blob();
-          
-          const link = document.createElement('a');
-          const url = window.URL.createObjectURL(blob);
-          link.href = url;
-          
-          // Get file extension from URL or default based on content type
-          const urlParts = file_url.split('.');
-          const extension = urlParts.length > 1 ? urlParts.pop() : 
-                          blob.type.includes('pdf') ? 'pdf' : 
-                          blob.type.includes('image') ? 'jpg' : 'file';
-          
-          link.download = `${productTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.${extension}`;
-          link.style.display = 'none';
-          
-          document.body.appendChild(link);
-          link.click();
+        // Fetch the file with proper headers to ensure content integrity
+        const response = await fetch(file_url, {
+          method: 'GET',
+          headers: {
+            'Accept': '*/*',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch file: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        
+        // Determine the correct file extension and MIME type
+        const contentType = response.headers.get('content-type') || blob.type;
+        const urlParts = file_url.split('.');
+        let extension = urlParts.length > 1 ? urlParts.pop()?.toLowerCase() : '';
+        
+        // If no extension from URL, determine from content type
+        if (!extension) {
+          if (contentType.includes('pdf')) extension = 'pdf';
+          else if (contentType.includes('image/jpeg')) extension = 'jpg';
+          else if (contentType.includes('image/png')) extension = 'png';
+          else if (contentType.includes('image')) extension = 'jpg';
+          else if (contentType.includes('video/mp4')) extension = 'mp4';
+          else if (contentType.includes('video')) extension = 'mp4';
+          else if (contentType.includes('audio/mpeg')) extension = 'mp3';
+          else if (contentType.includes('audio')) extension = 'mp3';
+          else if (contentType.includes('text')) extension = 'txt';
+          else if (contentType.includes('zip')) extension = 'zip';
+          else if (contentType.includes('doc')) extension = 'doc';
+          else extension = 'file';
+        }
+        
+        // Create a new blob with the correct MIME type to ensure proper viewing
+        const correctedBlob = new Blob([blob], { type: contentType });
+        
+        // Clean filename for compatibility across devices
+        const cleanTitle = productTitle
+          .replace(/[<>:"/\\|?*]/g, '') // Remove invalid filename characters
+          .replace(/\s+/g, '_') // Replace spaces with underscores
+          .substring(0, 100); // Limit length
+        
+        const fileName = `${cleanTitle}.${extension}`;
+        
+        // Create download link
+        const url = window.URL.createObjectURL(correctedBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.style.display = 'none';
+        
+        // For mobile Safari and some browsers, we need to handle differently
+        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+          // iOS Safari handling
+          link.target = '_blank';
+          link.rel = 'noopener';
+        }
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        setTimeout(() => {
           document.body.removeChild(link);
-          
-          // Clean up the blob URL
           window.URL.revokeObjectURL(url);
-          toast.success(`${productTitle} downloaded to your device!`);
-        } else {
-          // For desktop, use direct download
+        }, 100);
+        
+        toast.success(`📥 ${productTitle} downloaded successfully! Check your downloads folder.`);
+        
+      } catch (downloadError) {
+        console.error('Download error:', downloadError);
+        
+        // Enhanced fallback - try direct link approach
+        try {
           const link = document.createElement('a');
           link.href = file_url;
           link.download = `${productTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.${file_url.split('.').pop() || 'file'}`;
@@ -78,13 +126,14 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-          toast.success(`${productTitle} download started!`);
+          
+          toast.success("📱 Opening your product file...");
+        } catch (fallbackError) {
+          console.error('Fallback download failed:', fallbackError);
+          // Last resort - open in new window
+          window.open(file_url, '_blank', 'noopener,noreferrer');
+          toast.error("Unable to download directly. File opened in new tab.");
         }
-      } catch (downloadError) {
-        console.error('Download error:', downloadError);
-        // Fallback to opening in new tab
-        window.open(file_url, '_blank', 'noopener,noreferrer');
-        toast.success("Opening your product file...");
       }
 
     } catch (error: any) {
