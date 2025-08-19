@@ -59,9 +59,13 @@ serve(async (req) => {
 
     // Process based on product type
     if (order.product.product_type === "digital") {
-      // Trigger email delivery for digital products
+      // Trigger email delivery for digital products IMMEDIATELY
       await supabaseAdmin.functions.invoke("send-digital-product", {
-        body: { orderId: order.id }
+        body: { 
+          orderId: order.id, 
+          productId: order.product.id,
+          deliveryEmail: order.delivery_email || verificationData.data.customer?.email
+        }
       });
     } else {
       // For physical products, generate tracking number

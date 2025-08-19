@@ -46,13 +46,15 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
     setIsProcessing(true);
 
     try {
-      // Process payment through Paystack
-      const { data, error } = await supabase.functions.invoke('paystack-payment', {
+      // Use global payment gateway for all currencies
+      const { data, error } = await supabase.functions.invoke('global-payment-gateway', {
         body: {
           productId: product.id,
           paymentMethod: paymentMethod,
-          amount: totalAmount * 1600, // Convert USD to Naira (approximate rate)
-          deliveryEmail: product.product_type === 'digital' ? deliveryEmail : null
+          amount: totalAmount, // Amount in USD
+          deliveryEmail: product.product_type === 'digital' ? deliveryEmail : null,
+          currency: 'NGN', // For Paystack in Nigeria
+          country: 'NG'
         }
       });
 
@@ -166,9 +168,11 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
           <div className="p-4 bg-muted rounded-lg">
             <h4 className="font-medium mb-2">Paystack Payment</h4>
             <p className="text-sm text-muted-foreground">
-              You will be redirected to Paystack to complete your payment securely using {paymentMethod === 'card' ? 'your card' : paymentMethod === 'bank_transfer' ? 'bank transfer' : paymentMethod.toUpperCase()}.
+              You will be redirected to complete your payment securely using {paymentMethod === 'card' ? 'your card' : paymentMethod === 'bank_transfer' ? 'bank transfer' : paymentMethod.toUpperCase()}.
               <br />
-              <strong>Platform Fee:</strong> 25% goes to TimiDigiWorld, 75% to seller
+              <strong>Commission:</strong> 25% platform fee, 75% goes to seller
+              <br />
+              <strong>Seller Payment:</strong> Funds go directly to seller's linked bank account
             </p>
           </div>
         )}

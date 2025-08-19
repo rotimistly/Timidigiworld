@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { ProductForm } from '@/components/seller/ProductForm';
+import { SellerMessageCenter } from '@/components/seller/SellerMessageCenter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function SellerDashboard() {
@@ -339,39 +340,7 @@ export default function SellerDashboard() {
           </TabsContent>
 
           <TabsContent value="messages" className="space-y-4">
-            <div className="grid gap-4">
-              {conversations.length === 0 ? (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No Messages Yet</h3>
-                    <p className="text-muted-foreground">Customer messages will appear here</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                conversations.map((conversation) => (
-                  <Card key={conversation.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-medium">Chat with {conversation.buyer?.full_name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            About: {conversation.product?.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(conversation.updated_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <Button variant="outline" size="sm">
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          View Chat
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
+            <SellerMessageCenter />
           </TabsContent>
         </Tabs>
       </div>

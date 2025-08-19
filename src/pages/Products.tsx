@@ -38,10 +38,7 @@ export default function Products() {
           .from('products')
           .select(`
             *,
-            profiles (
-              full_name,
-              avatar_url
-            )
+            profiles!seller_id(full_name, avatar_url)
           `)
           .eq('status', 'active')
           .order('created_at', { ascending: false }),

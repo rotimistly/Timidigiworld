@@ -43,7 +43,9 @@ serve(async (req) => {
     }
 
     const totalAmount = parseFloat(amount);
-    const commissionRate = 0.25; // 25% for app owner
+    
+    // FIXED COMMISSION: Platform gets exactly 25%, seller gets 75%
+    const commissionRate = 0.25; // 25% for TimiDigiWorld
     const commissionAmount = totalAmount * commissionRate;
     const sellerAmount = totalAmount - commissionAmount;
 
@@ -55,7 +57,7 @@ serve(async (req) => {
       throw new Error("PAYSTACK_SECRET_KEY environment variable is not set");
     }
 
-    // Get currency rates for global support
+    // Get current exchange rate for NGN
     const { data: currencyData } = await supabaseAdmin
       .from("currency_rates")
       .select("rate")
@@ -63,7 +65,7 @@ serve(async (req) => {
       .single();
     
     const exchangeRate = currencyData?.rate || 1600;
-    const amountInNaira = totalAmount * exchangeRate;
+    const amountInNaira = Math.round(totalAmount * exchangeRate);
 
     // Initialize Paystack payment
     const paystackResponse = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -81,8 +83,9 @@ serve(async (req) => {
         metadata: {
           productId,
           userId: user.id,
-          commissionAmount: commissionAmount * 100,
-          sellerAmount: sellerAmount * 100,
+          originalAmount: totalAmount,
+          commissionAmount: commissionAmount,
+          sellerAmount: sellerAmount,
         }
       }),
     });

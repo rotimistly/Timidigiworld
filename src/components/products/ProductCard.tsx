@@ -7,7 +7,7 @@ import { Package, ShoppingCart, MessageSquare, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PaymentForm } from '@/components/payment/PaymentForm';
-import { ChatWindow } from '@/components/chat/ChatWindow';
+import { ProductChatWindow } from '@/components/chat/ProductChatWindow';
 
 interface ProductCardProps {
   product: {
@@ -38,34 +38,6 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
 
   const handleContactSeller = async () => {
     if (!user || !product.seller_id) return;
-
-    // Create or find conversation
-    const { data: existingConv } = await supabase
-      .from('conversations')
-      .select('id')
-      .eq('product_id', product.id)
-      .eq('buyer_id', user.id)
-      .eq('seller_id', product.seller_id)
-      .single();
-
-    if (existingConv) {
-      setConversationId(existingConv.id);
-    } else {
-      const { data: newConv } = await supabase
-        .from('conversations')
-        .insert({
-          product_id: product.id,
-          buyer_id: user.id,
-          seller_id: product.seller_id
-        })
-        .select('id')
-        .single();
-
-      if (newConv) {
-        setConversationId(newConv.id);
-      }
-    }
-    
     setShowChat(true);
   };
 
@@ -172,14 +144,14 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
         </Dialog>
       )}
 
-      {showChat && conversationId && product.seller_id && (
+      {showChat && product.seller_id && (
         <Dialog open={showChat} onOpenChange={setShowChat}>
           <DialogContent className="max-w-2xl">
-            <ChatWindow
-              conversationId={conversationId}
-              recipientId={product.seller_id}
-              recipientName={product.profiles?.full_name || "Seller"}
+            <ProductChatWindow
+              productId={product.id}
+              sellerId={product.seller_id}
               productTitle={product.title}
+              sellerName={product.profiles?.full_name || "Seller"}
             />
           </DialogContent>
         </Dialog>

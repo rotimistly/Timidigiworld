@@ -8,6 +8,7 @@ import { Search, Package, Truck, CheckCircle, Clock, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { ClearTrackingHistory } from '@/components/products/ClearTrackingHistory';
 
 interface Order {
   id: string;
@@ -211,6 +212,10 @@ export default function TrackOrders() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Track Your Orders</h1>
           <p className="text-muted-foreground">Monitor your purchases and shipping status</p>
+        </div>
+        
+        <div className="mb-8">
+          <ClearTrackingHistory />
         </div>
 
         <Tabs defaultValue="my-orders" className="space-y-6">

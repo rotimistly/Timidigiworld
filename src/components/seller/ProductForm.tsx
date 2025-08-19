@@ -103,13 +103,16 @@ export function ProductForm({ onSuccess }: ProductFormProps) {
         product_type: formData.product_type,
         image_url: imageUrl,
         file_url: fileUrl,
+        file_type: productFile ? productFile.type : null,
+        file_size: productFile ? productFile.size : null,
         seller_id: user.id,
         shipping_required: formData.product_type === 'physical' ? formData.shipping_required : false,
         shipping_cost: formData.product_type === 'physical' && formData.shipping_cost 
           ? parseFloat(formData.shipping_cost) : 0,
         weight: formData.product_type === 'physical' && formData.weight 
           ? parseFloat(formData.weight) : null,
-        status: 'active'
+        status: 'active',
+        currency: 'USD'
       };
 
       const { error } = await supabase
@@ -321,15 +324,18 @@ export function ProductForm({ onSuccess }: ProductFormProps) {
                     <Input
                       id="file"
                       type="file"
-                      accept=".pdf,.doc,.docx,.zip,.rar,.psd,.ai,.sketch,.fig,.mp4,.mov,.mp3,.wav"
+                      accept=".pdf,.doc,.docx,.zip,.rar,.7z,.psd,.ai,.sketch,.fig,.xd,.mp4,.mov,.avi,.mkv,.mp3,.wav,.flac,.jpg,.jpeg,.png,.gif,.svg,.webp,.pptx,.xlsx,.txt,.csv,.json,.xml,.html,.css,.js,.ts,.py,.java,.cpp,.c,.swift,.kt,.dart,.go,.rust,.php,.rb"
                       onChange={(e) => {
-                        setProductFile(e.target.files?.[0] || null);
-                        if (e.target.files?.[0]) setProductUrl(''); // Clear URL if file is selected
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setProductFile(file);
+                          setProductUrl(''); // Clear URL if file is selected
+                        }
                       }}
                       className="mt-1"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Upload files: PDF, DOC, ZIP, PSD, AI, Sketch, Video, Audio (Max 50MB)
+                      Upload any digital file: Documents, Archives, Design files, Videos, Audio, Images, Code, etc. (Max 100MB)
                     </p>
                   </div>
                   
