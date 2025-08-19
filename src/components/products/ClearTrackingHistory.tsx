@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-export function ClearTrackingHistory() {
+export function ClearTrackingHistory({ onCleared }: { onCleared?: () => void }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isClearing, setIsClearing] = useState(false);
@@ -27,6 +27,7 @@ export function ClearTrackingHistory() {
         title: "Success",
         description: "All pending tracking history has been cleared",
       });
+      onCleared?.();
     } catch (error: any) {
       toast({
         title: "Error",

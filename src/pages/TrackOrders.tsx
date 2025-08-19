@@ -221,7 +221,7 @@ export default function TrackOrders() {
         </div>
         
         <div className="mb-8">
-          <ClearTrackingHistory />
+          <ClearTrackingHistory onCleared={fetchUserOrders} />
         </div>
 
         <Tabs defaultValue="my-orders" className="space-y-6">
