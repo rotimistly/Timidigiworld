@@ -36,7 +36,10 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          profiles!seller_id(full_name, avatar_url)
+        `)
         .eq('status', 'active')
         .limit(8);
 
