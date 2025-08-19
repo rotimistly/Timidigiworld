@@ -31,35 +31,58 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get product details
-    const { data: product, error: productError } = await supabaseAdmin
+    // Try to get product from regular products table first
+    let product = null;
+    let isAdminProduct = false;
+    
+    const { data: regularProduct, error: regularProductError } = await supabaseAdmin
       .from("products")
       .select("*")
       .eq("id", productId)
       .single();
 
-    if (productError || !product) {
+    if (!regularProductError && regularProduct) {
+      product = regularProduct;
+    } else {
+      // Try admin products table
+      const { data: adminProduct, error: adminProductError } = await supabaseAdmin
+        .from("admin_products")
+        .select("*")
+        .eq("id", productId)
+        .single();
+      
+      if (!adminProductError && adminProduct) {
+        product = adminProduct;
+        isAdminProduct = true;
+      }
+    }
+
+    if (!product) {
       throw new Error("Product not found");
     }
 
     const totalAmount = parseFloat(amount);
-    const commissionRate = 0.04; // 4%
+    
+    // Admin products get 100% commission, regular products get 4% commission
+    const commissionRate = isAdminProduct ? 0.0 : 0.04;
     const commissionAmount = totalAmount * commissionRate;
-    const sellerAmount = totalAmount - commissionAmount;
+    const sellerAmount = isAdminProduct ? totalAmount : (totalAmount - commissionAmount);
 
-    // Create order
+    // Create order (use appropriate table structure)
+    const orderData = {
+      product_id: productId,
+      buyer_id: user.id,
+      amount: totalAmount,
+      payment_method: paymentMethod,
+      commission_rate: commissionRate,
+      commission_amount: commissionAmount,
+      seller_amount: sellerAmount,
+      status: "pending"
+    };
+
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
-      .insert({
-        product_id: productId,
-        buyer_id: user.id,
-        amount: totalAmount,
-        payment_method: paymentMethod,
-        commission_rate: commissionRate,
-        commission_amount: commissionAmount,
-        seller_amount: sellerAmount,
-        status: "pending"
-      })
+      .insert(orderData)
       .select()
       .single();
 

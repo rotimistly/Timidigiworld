@@ -1,13 +1,32 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, User, Search, Plus, Store, Menu, Package, Settings, BookOpen, MessageSquare } from 'lucide-react';
+import { ShoppingCart, User, Search, Plus, Store, Menu, Package, Settings, BookOpen, MessageSquare, Shield } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export function Header() {
   const { user, signOut } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      checkAdminStatus();
+    }
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('user_role')
+      .eq('user_id', user?.id)
+      .single();
+    
+    setIsAdmin(profile?.user_role === 'admin');
+  };
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -63,6 +82,14 @@ export function Header() {
                     Track Orders
                   </Button>
                 </Link>
+                {isAdmin && (
+                  <Link to="/admin-dashboard">
+                    <Button variant="ghost" size="sm">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
                 <Button variant="ghost" size="sm" onClick={signOut}>
                   Sign Out
                 </Button>
@@ -109,13 +136,19 @@ export function Header() {
                       <Package className="h-5 w-5" />
                       <span>Track Orders</span>
                     </Link>
-                    <Link to="/products" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
-                      <ShoppingCart className="h-5 w-5" />
-                      <span>Browse Products</span>
-                    </Link>
-                    <Button variant="outline" onClick={signOut} className="justify-start">
-                      Sign Out
-                    </Button>
+                     <Link to="/products" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                       <ShoppingCart className="h-5 w-5" />
+                       <span>Browse Products</span>
+                     </Link>
+                     {isAdmin && (
+                       <Link to="/admin-dashboard" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                         <Shield className="h-5 w-5" />
+                         <span>Admin Dashboard</span>
+                       </Link>
+                     )}
+                     <Button variant="outline" onClick={signOut} className="justify-start">
+                       Sign Out
+                     </Button>
                   </>
                 ) : (
                   <Link to="/auth">
