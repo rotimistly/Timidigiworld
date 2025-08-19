@@ -72,7 +72,7 @@ serve(async (req) => {
       // Update order status
       await supabaseAdmin
         .from("orders")
-        .update({ status: "paid" })
+        .update({ status: "completed" })
         .eq("id", order.id);
 
       // If digital product, trigger email delivery
@@ -88,7 +88,7 @@ serve(async (req) => {
           .from("orders")
           .update({ 
             tracking_number: trackingNumber,
-            status: "processing" 
+            status: "completed" 
           })
           .eq("id", order.id);
 

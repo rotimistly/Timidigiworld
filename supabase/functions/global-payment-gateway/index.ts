@@ -181,7 +181,7 @@ serve(async (req) => {
           commission_rate: commissionRate,
           commission_amount: commissionAmount,
           seller_amount: sellerAmount,
-          status: "paid" // Simulated as paid
+          status: "completed" // Simulated as completed
         })
         .select()
         .single();

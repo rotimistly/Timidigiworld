@@ -112,13 +112,11 @@ export default function TrackOrders() {
     switch (status) {
       case 'pending':
         return <Clock className="h-4 w-4" />;
-      case 'paid':
-      case 'processing':
+      case 'completed':
         return <Package className="h-4 w-4" />;
       case 'shipped':
         return <Truck className="h-4 w-4" />;
       case 'delivered':
-      case 'completed':
         return <CheckCircle className="h-4 w-4" />;
       case 'cancelled':
         return <X className="h-4 w-4" />;
@@ -131,13 +129,11 @@ export default function TrackOrders() {
     switch (status) {
       case 'pending':
         return 'secondary';
-      case 'paid':
-      case 'processing':
+      case 'completed':
         return 'default';
       case 'shipped':
         return 'default';
       case 'delivered':
-      case 'completed':
         return 'default';
       case 'cancelled':
         return 'destructive';
@@ -189,7 +185,7 @@ export default function TrackOrders() {
                 </span>
               </Badge>
               {order.product.product_type === 'digital' && 
-               (order.status === 'paid' || order.status === 'completed' || order.status === 'delivered') && (
+               (order.status === 'completed' || order.status === 'delivered') && (
                 <SecureDownloadButton 
                   orderId={order.id}
                   productTitle={order.product.title}
