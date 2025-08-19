@@ -34,16 +34,27 @@ const Index = () => {
 
   const fetchFeaturedProducts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: productsData, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          profiles!seller_id(full_name, avatar_url)
-        `)
+        .select('*')
         .eq('status', 'active')
         .limit(8);
 
       if (error) throw error;
+
+      // Fetch profiles for these products
+      const sellerIds = productsData?.map(p => p.seller_id) || [];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url')
+        .in('user_id', sellerIds);
+
+      // Merge products with profiles
+      const data = productsData?.map(product => ({
+        ...product,
+        profiles: profilesData?.find(profile => profile.user_id === product.seller_id) || null
+      })) || [];
+
       setProducts(data || []);
     } catch (error: any) {
       toast({
