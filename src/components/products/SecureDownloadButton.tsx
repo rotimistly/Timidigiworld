@@ -80,8 +80,8 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
           else extension = 'file';
         }
         
-        // Force PDF format for downloads while preserving content
-        const correctedBlob = new Blob([blob], { type: 'application/pdf' });
+        // Preserve original file format and content type
+        const correctedBlob = new Blob([blob], { type: contentType });
         
         // Clean filename for compatibility across devices
         const cleanTitle = productTitle
@@ -89,7 +89,7 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
           .replace(/\s+/g, '_') // Replace spaces with underscores
           .substring(0, 100); // Limit length
         
-        const fileName = `${cleanTitle}.pdf`; // Force PDF extension
+        const fileName = `${cleanTitle}.${extension}`;
         
         // Create download link
         const url = window.URL.createObjectURL(correctedBlob);
@@ -114,16 +114,19 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
           window.URL.revokeObjectURL(url);
         }, 100);
         
-        toast.success(`📥 ${productTitle} downloaded as PDF! Check your downloads folder.`);
+        toast.success(`📥 ${productTitle} downloaded successfully! Check your downloads folder.`);
         
       } catch (downloadError) {
         console.error('Download error:', downloadError);
         
-        // Enhanced fallback - try direct link approach with PDF extension
+        // Enhanced fallback - try direct link approach with original extension
         try {
+          const urlParts = file_url.split('.');
+          const originalExtension = urlParts.length > 1 ? urlParts.pop()?.toLowerCase() : 'file';
+          
           const link = document.createElement('a');
           link.href = file_url;
-          link.download = `${productTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.pdf`;
+          link.download = `${productTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.${originalExtension}`;
           link.target = '_blank';
           link.rel = 'noopener noreferrer';
           
@@ -131,7 +134,7 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
           link.click();
           document.body.removeChild(link);
           
-          toast.success("📱 PDF download started...");
+          toast.success("📱 Download started...");
         } catch (fallbackError) {
           console.error('Fallback download failed:', fallbackError);
           // Last resort - open in new window
@@ -173,7 +176,7 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
         ) : (
           <>
             <Download className="w-4 h-4 mr-2" />
-            Download PDF
+            Download
           </>
         )}
       </Button>
