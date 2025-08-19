@@ -23,60 +23,89 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get order details with product and buyer info
+    console.log("Processing digital product delivery for order:", orderId);
+
+    // Get order details first
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
-      .select(`
-        *,
-        product:products(*),
-        buyer:profiles!orders_buyer_id_fkey(full_name, email)
-      `)
+      .select("*")
       .eq("id", orderId)
       .single();
 
     if (orderError || !order) {
+      console.error("Order not found:", orderError);
       throw new Error("Order not found");
     }
 
+    // Get product details separately
+    const { data: product, error: productError } = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .eq("id", order.product_id)
+      .single();
+
+    if (productError || !product) {
+      console.error("Product not found:", productError);
+      throw new Error("Product not found");
+    }
+
     // Only process digital products
-    if (order.product.product_type !== "digital") {
+    if (product.product_type !== "digital") {
       throw new Error("This endpoint is only for digital products");
     }
 
-    // Get buyer email - priority: delivery_email > profile email > auth email
+    // Get buyer profile for additional email/name info
+    const { data: buyerProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name, email")
+      .eq("user_id", order.buyer_id)
+      .single();
+
+    // Get buyer email - priority: delivery_email > auth email > profile email
     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(order.buyer_id);
-    const buyerEmail = order.delivery_email || order.buyer?.email || authUser.user?.email;
+    const buyerEmail = order.delivery_email || authUser.user?.email || buyerProfile?.email;
 
     if (!buyerEmail) {
+      console.error("No buyer email found for order:", orderId);
       throw new Error("Buyer email not found");
+    }
+
+    console.log("Sending digital product to:", buyerEmail);
+
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY not configured");
+      throw new Error("Email service not configured");
     }
 
     // Send email with digital product
     const emailResponse = await resend.emails.send({
-      from: "TimiDigiWorld <noreply@timidigitworld.com>",
+      from: "TimiDigiWorld <onboarding@resend.dev>", // Using default resend domain
       to: [buyerEmail],
-      subject: `Your Digital Product: ${order.product.title}`,
+      subject: `Your Digital Product: ${product.title}`,
       html: `
         <h1>Thank you for your purchase!</h1>
-        <p>Hi ${order.buyer?.full_name || 'Customer'},</p>
-        <p>Your digital product "${order.product.title}" is ready for download.</p>
+        <p>Hi ${buyerProfile?.full_name || 'Customer'},</p>
+        <p>Your digital product "${product.title}" is ready for download.</p>
         
-        ${order.product.file_url ? 
-          `<p><a href="${order.product.file_url}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Download Your Product</a></p>` :
+        ${product.file_url ? 
+          `<p><a href="${product.file_url}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Download Your Product</a></p>` :
           '<p>Your product will be available for download shortly.</p>'
         }
         
         <p><strong>Order Details:</strong></p>
         <ul>
-          <li>Product: ${order.product.title}</li>
+          <li>Product: ${product.title}</li>
           <li>Amount: $${order.amount}</li>
           <li>Order ID: ${order.id}</li>
         </ul>
         
-        <p>If you have any issues, please contact our support team.</p>
+        <p>If you have any issues, please contact our support team at Rotimistly@gmail.com or 08147838934.</p>
         <p>Best regards,<br>TimiDigiWorld Team</p>
       `,
     });
+
+    console.log("Email response:", emailResponse);
 
     // Update order to mark email as sent
     const { error: updateError } = await supabaseAdmin
@@ -92,13 +121,19 @@ serve(async (req) => {
     }
 
     // Create notification for buyer
-    await supabaseAdmin.from("order_notifications").insert({
+    const { error: notificationError } = await supabaseAdmin.from("order_notifications").insert({
       order_id: orderId,
       user_id: order.buyer_id,
       type: "delivered",
       title: "Digital Product Delivered",
-      message: `Your digital product "${order.product.title}" has been sent to your email.`
+      message: `Your digital product "${product.title}" has been sent to your email.`
     });
+
+    if (notificationError) {
+      console.error("Failed to create notification:", notificationError);
+    }
+
+    console.log("Digital product delivery completed successfully");
 
     return new Response(JSON.stringify({ 
       success: true, 

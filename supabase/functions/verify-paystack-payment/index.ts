@@ -7,30 +7,42 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("Payment verification request received");
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { reference } = await req.json();
+    console.log("Verifying payment reference:", reference);
 
     if (!reference) {
+      console.error("No payment reference provided");
       throw new Error("Payment reference is required");
+    }
+
+    const paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY");
+    if (!paystackSecretKey) {
+      console.error("PAYSTACK_SECRET_KEY not configured");
+      throw new Error("Payment gateway configuration error");
     }
 
     // Verify payment with Paystack
     const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${Deno.env.get("PAYSTACK_SECRET_KEY")}`,
+        "Authorization": `Bearer ${paystackSecretKey}`,
         "Content-Type": "application/json",
       },
     });
 
     const verificationData = await verifyResponse.json();
+    console.log("Paystack verification response:", verificationData);
     
     if (!verificationData.status || verificationData.data.status !== "success") {
-      throw new Error("Payment verification failed");
+      console.error("Payment verification failed:", verificationData);
+      throw new Error(`Payment verification failed: ${verificationData.message || 'Transaction not successful'}`);
     }
 
     // Create Supabase admin client
@@ -39,35 +51,84 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // First, get the order
+    const { data: order, error: orderFindError } = await supabaseAdmin
+      .from("orders")
+      .select("*")
+      .eq("paystack_reference", reference)
+      .single();
+
+    if (orderFindError || !order) {
+      console.error("Order not found:", orderFindError, "Reference:", reference);
+      throw new Error("Order not found for this payment reference");
+    }
+
+    // Then get the product separately
+    const { data: product, error: productError } = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .eq("id", order.product_id)
+      .single();
+
+    if (productError || !product) {
+      console.error("Product not found:", productError);
+      throw new Error("Product not found");
+    }
+
     // Update order status
-    const { data: order, error: orderError } = await supabaseAdmin
+    const { data: updatedOrder, error: updateError } = await supabaseAdmin
       .from("orders")
       .update({ 
         status: "paid",
         updated_at: new Date().toISOString()
       })
-      .eq("paystack_reference", reference)
-      .select(`
-        *,
-        product:products(*)
-      `)
+      .eq("id", order.id)
+      .select("*")
       .single();
 
-    if (orderError || !order) {
-      throw new Error("Order not found or update failed");
+    if (updateError || !updatedOrder) {
+      console.error("Failed to update order:", updateError);
+      throw new Error("Failed to update order status");
     }
 
+    // Combine order with product data
+    const orderWithProduct = {
+      ...updatedOrder,
+      product: product
+    };
+
+    console.log("Order updated successfully:", orderWithProduct.id, "Product type:", product.product_type);
+
     // Process based on product type
-    if (order.product.product_type === "digital") {
+    if (product.product_type === "digital") {
+      console.log("Processing digital product delivery");
       // Trigger email delivery for digital products IMMEDIATELY
-      await supabaseAdmin.functions.invoke("send-digital-product", {
+      const { data: emailResult, error: emailError } = await supabaseAdmin.functions.invoke("send-digital-product", {
         body: { 
-          orderId: order.id, 
-          productId: order.product.id,
-          deliveryEmail: order.delivery_email || verificationData.data.customer?.email
+          orderId: orderWithProduct.id, 
+          productId: product.id,
+          deliveryEmail: orderWithProduct.delivery_email || verificationData.data.customer?.email
         }
       });
+
+      if (emailError) {
+        console.error("Failed to send digital product email:", emailError);
+        // Don't throw error here - payment is still successful
+      } else {
+        console.log("Digital product email sent successfully");
+      }
+
+      // Update order status to completed for digital products
+      await supabaseAdmin
+        .from("orders")
+        .update({ 
+          status: "completed",
+          email_sent: true
+        })
+        .eq("id", orderWithProduct.id);
+
     } else {
+      console.log("Processing physical product");
       // For physical products, generate tracking number
       const trackingNumber = `TDW${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
       await supabaseAdmin
@@ -76,23 +137,30 @@ serve(async (req) => {
           tracking_number: trackingNumber,
           status: "processing" 
         })
-        .eq("id", order.id);
+        .eq("id", orderWithProduct.id);
 
       // Create notification for tracking
-      await supabaseAdmin.from("order_notifications").insert({
-        order_id: order.id,
-        user_id: order.buyer_id,
+      const { error: notificationError } = await supabaseAdmin.from("order_notifications").insert({
+        order_id: orderWithProduct.id,
+        user_id: orderWithProduct.buyer_id,
         type: "paid",
         title: "Payment Confirmed",
-        message: `Your order for "${order.product.title}" has been confirmed. Tracking number: ${trackingNumber}`
+        message: `Your order for "${product.title}" has been confirmed. Tracking number: ${trackingNumber}`
       });
+
+      if (notificationError) {
+        console.error("Failed to create notification:", notificationError);
+      }
     }
+
+    console.log("Payment verification completed successfully");
 
     return new Response(JSON.stringify({ 
       success: true,
-      orderId: order.id,
-      status: order.status,
-      productType: order.product.product_type
+      orderId: orderWithProduct.id,
+      status: orderWithProduct.status,
+      productType: product.product_type,
+      order: orderWithProduct
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

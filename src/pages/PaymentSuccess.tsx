@@ -91,8 +91,9 @@ export default function PaymentSuccess() {
     );
   }
 
-  const order = verificationResult?.order;
-  const isDigital = order?.product?.product_type === 'digital';
+  const order = verificationResult?.order || verificationResult;
+  const product = order?.product || {};
+  const isDigital = product?.product_type === 'digital';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -106,8 +107,10 @@ export default function PaymentSuccess() {
         
         <CardContent className="space-y-6">
           <div className="text-center">
-            <h3 className="font-semibold text-lg mb-2">{order?.product?.title}</h3>
-            <p className="text-2xl font-bold text-primary">₦{order?.amount?.toLocaleString()}</p>
+            <h3 className="font-semibold text-lg mb-2">{product?.title || 'Your Order'}</h3>
+            <p className="text-2xl font-bold text-primary">
+              ₦{order?.amount ? (order.amount * 1600).toLocaleString() : 'N/A'}
+            </p>
             <p className="text-sm text-muted-foreground">Reference: {reference}</p>
           </div>
 

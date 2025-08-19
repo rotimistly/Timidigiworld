@@ -104,7 +104,7 @@ serve(async (req) => {
           amount: Math.round(convertedAmount * 100), // Paystack expects amount in kobo
           reference,
           currency: "NGN",
-          callback_url: `${new URL(req.headers.get("origin") || "https://qozthicyahnfsewsehys.supabase.co").origin}/payment-success`,
+          callback_url: `${new URL(req.headers.get("origin") || "https://qozthicyahnfsewsehys.supabase.co").origin}/payment-success?reference=${reference}`,
           metadata: {
             productId,
             userId: user.id,
@@ -155,7 +155,7 @@ serve(async (req) => {
     } else {
       // For other currencies, simulate or use other gateways
       // This is a placeholder - you would integrate with Stripe, PayPal, etc.
-      const simulatedPaymentUrl = `${req.headers.get("origin")}/payment-success?ref=${reference}&status=success`;
+      const simulatedPaymentUrl = `${req.headers.get("origin")}/payment-success?reference=${reference}&status=success`;
       
       // Create order record
       const { data: order, error: orderError } = await supabaseAdmin
