@@ -91,7 +91,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true,
       orderId: order.id,
-      status: order.status
+      status: order.status,
+      productType: order.product.product_type
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ClearTrackingHistory } from '@/components/products/ClearTrackingHistory';
+import { SecureDownloadButton } from '@/components/products/SecureDownloadButton';
 
 interface Order {
   id: string;
@@ -180,12 +181,21 @@ export default function TrackOrders() {
           </div>
           <div className="text-right">
             <p className="text-lg font-bold">₦{order.amount.toLocaleString()}</p>
-            <Badge variant={getStatusColor(order.status)} className="mt-2">
-              <span className="flex items-center gap-1">
-                {getStatusIcon(order.status)}
-                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-              </span>
-            </Badge>
+            <div className="flex items-center justify-end gap-2 mt-2">
+              <Badge variant={getStatusColor(order.status)}>
+                <span className="flex items-center gap-1">
+                  {getStatusIcon(order.status)}
+                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </span>
+              </Badge>
+              {order.product.product_type === 'digital' && 
+               (order.status === 'paid' || order.status === 'completed' || order.status === 'delivered') && (
+                <SecureDownloadButton 
+                  orderId={order.id}
+                  productTitle={order.product.title}
+                />
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
