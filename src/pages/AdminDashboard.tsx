@@ -37,14 +37,27 @@ interface AdminProduct {
   created_at: string;
 }
 
+interface NewsUpdate {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  priority: string;
+  is_published: boolean;
+  published_at: string | null;
+  created_at: string;
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, totalProducts: 0, totalRevenue: 0, openTickets: 0 });
   const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
+  const [newsUpdates, setNewsUpdates] = useState<NewsUpdate[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isNewsDialogOpen, setIsNewsDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -54,6 +67,14 @@ export default function AdminDashboard() {
     category: '',
     product_type: 'digital',
     file_url: ''
+  });
+
+  const [newsFormData, setNewsFormData] = useState({
+    title: '',
+    content: '',
+    type: 'announcement',
+    priority: 'normal',
+    is_published: false
   });
 
   useEffect(() => {
@@ -105,6 +126,14 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false });
       
       setAdminProducts(adminProductsData || []);
+
+      // Fetch news updates
+      const { data: newsData } = await supabase
+        .from('news_updates')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      setNewsUpdates(newsData || []);
 
       // Fetch conversations
       const { data: conversationsData } = await supabase
@@ -259,6 +288,97 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleCreateNews = async () => {
+    try {
+      const { error } = await supabase
+        .from('news_updates')
+        .insert({
+          title: newsFormData.title,
+          content: newsFormData.content,
+          type: newsFormData.type,
+          priority: newsFormData.priority,
+          is_published: newsFormData.is_published,
+          published_at: newsFormData.is_published ? new Date().toISOString() : null,
+          admin_id: user?.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "News update created successfully",
+      });
+
+      setIsNewsDialogOpen(false);
+      setNewsFormData({
+        title: '',
+        content: '',
+        type: 'announcement',
+        priority: 'normal',
+        is_published: false
+      });
+      fetchAdminData();
+
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create news update",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleNewsPublication = async (newsId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('news_updates')
+        .update({
+          is_published: !currentStatus,
+          published_at: !currentStatus ? new Date().toISOString() : null
+        })
+        .eq('id', newsId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `News update ${!currentStatus ? 'published' : 'unpublished'} successfully`,
+      });
+      
+      fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update news status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteNews = async (newsId: string) => {
+    try {
+      const { error } = await supabase
+        .from('news_updates')
+        .delete()
+        .eq('id', newsId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "News update deleted successfully",
+      });
+      
+      fetchAdminData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete news update",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -278,13 +398,90 @@ export default function AdminDashboard() {
       <div className="container mx-auto p-6 space-y-6 flex-1">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Admin Product
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Dialog open={isNewsDialogOpen} onOpenChange={setIsNewsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add News Update
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Create News Update</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="news-title">Title</Label>
+                      <Input
+                        id="news-title"
+                        value={newsFormData.title}
+                        onChange={(e) => setNewsFormData({...newsFormData, title: e.target.value})}
+                        placeholder="News title"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="news-type">Type</Label>
+                      <Select value={newsFormData.type} onValueChange={(value) => setNewsFormData({...newsFormData, type: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="announcement">Announcement</SelectItem>
+                          <SelectItem value="maintenance">Maintenance</SelectItem>
+                          <SelectItem value="feature">Feature</SelectItem>
+                          <SelectItem value="update">Update</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="news-priority">Priority</Label>
+                      <Select value={newsFormData.priority} onValueChange={(value) => setNewsFormData({...newsFormData, priority: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="normal">Normal</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="urgent">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="publish-now"
+                        checked={newsFormData.is_published}
+                        onChange={(e) => setNewsFormData({...newsFormData, is_published: e.target.checked})}
+                      />
+                      <Label htmlFor="publish-now">Publish immediately</Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="news-content">Content</Label>
+                    <Textarea
+                      id="news-content"
+                      value={newsFormData.content}
+                      onChange={(e) => setNewsFormData({...newsFormData, content: e.target.value})}
+                      placeholder="News content"
+                      rows={6}
+                    />
+                  </div>
+                </div>
+                <Button onClick={handleCreateNews} className="w-full">
+                  Create News Update
+                </Button>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Admin Product
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Create Admin Product (100% Commission)</DialogTitle>
@@ -363,8 +560,9 @@ export default function AdminDashboard() {
               <Button onClick={handleCreateProduct} className="w-full">
                 Create Product
               </Button>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -411,6 +609,7 @@ export default function AdminDashboard() {
         <Tabs defaultValue="products" className="space-y-4">
           <TabsList>
             <TabsTrigger value="products">Admin Products</TabsTrigger>
+            <TabsTrigger value="news">News Updates</TabsTrigger>
             <TabsTrigger value="orders">Order Management</TabsTrigger>
             <TabsTrigger value="messages">Support Messages</TabsTrigger>
           </TabsList>
@@ -443,6 +642,58 @@ export default function AdminDashboard() {
                       <Badge variant="outline" className="text-xs">
                         {product.category}
                       </Badge>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="news" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {newsUpdates.map((news) => (
+                <Card key={news.id}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{news.title}</CardTitle>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleNewsPublication(news.id, news.is_published)}
+                        >
+                          {news.is_published ? '👁️' : '👁️‍🗨️'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteNews(news.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-3">{news.content}</p>
+                    <div className="flex gap-2 mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {news.type}
+                      </Badge>
+                      <Badge 
+                        variant={news.priority === 'urgent' ? 'destructive' : news.priority === 'high' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {news.priority}
+                      </Badge>
+                      <Badge variant={news.is_published ? 'default' : 'secondary'} className="text-xs">
+                        {news.is_published ? 'Published' : 'Draft'}
+                      </Badge>
+                    </div>
+                    {news.published_at && (
+                      <p className="text-xs text-muted-foreground">
+                        Published: {new Date(news.published_at).toLocaleDateString()}
+                      </p>
                     )}
                   </CardContent>
                 </Card>

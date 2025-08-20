@@ -15,7 +15,7 @@ export default function AdminAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
+    emailOrPhone: '',
     password: '',
     fullName: '',
     confirmPassword: ''
@@ -32,26 +32,31 @@ export default function AdminAuth() {
       return;
     }
 
-    // Only allow specific admin emails
-    const allowedAdminEmails = ['rotimistly@gmail.com'];
-    if (!allowedAdminEmails.includes(formData.email.toLowerCase())) {
+    // Only allow specific admin credentials
+    const allowedAdminCredentials = ['rotimistly@gmail.com', '08147838934'];
+    if (!allowedAdminCredentials.includes(formData.emailOrPhone.toLowerCase())) {
       toast({
         title: "Access Denied",
-        description: "This email is not authorized for admin access.",
+        description: "This credential is not authorized for admin access.",
         variant: "destructive",
       });
       return;
     }
 
+    // Convert phone to email for Supabase auth if phone number provided
+    const isPhoneNumber = /^\d+$/.test(formData.emailOrPhone);
+    const authEmail = isPhoneNumber ? 'rotimistly@gmail.com' : formData.emailOrPhone;
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
+        email: authEmail,
         password: formData.password,
         options: {
           data: {
             full_name: formData.fullName,
-            user_role: 'admin'
+            user_role: 'admin',
+            phone_number: isPhoneNumber ? formData.emailOrPhone : null
           },
           emailRedirectTo: `${window.location.origin}/admin-dashboard`
         }
@@ -66,8 +71,33 @@ export default function AdminAuth() {
           .upsert({
             user_id: data.user.id,
             full_name: formData.fullName,
-            user_role: 'admin'
+            user_role: 'admin',
+            phone_number: isPhoneNumber ? formData.emailOrPhone : null
           });
+
+        // Send welcome email to admin
+        try {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              to: authEmail,
+              subject: 'Admin Account Created - TimiDigiWorld',
+              html: `
+                <h2>Welcome Admin!</h2>
+                <p>Your admin account has been created successfully.</p>
+                <p><strong>Account Details:</strong></p>
+                <ul>
+                  <li>Name: ${formData.fullName}</li>
+                  <li>Email: ${authEmail}</li>
+                  ${isPhoneNumber ? `<li>Phone: ${formData.emailOrPhone}</li>` : ''}
+                </ul>
+                <p>Please verify your email to complete the setup.</p>
+              `,
+              type: 'welcome'
+            }
+          });
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+        }
       }
 
       toast({
@@ -90,8 +120,12 @@ export default function AdminAuth() {
     setIsLoading(true);
     
     try {
+      // Convert phone to email for Supabase auth if phone number provided
+      const isPhoneNumber = /^\d+$/.test(formData.emailOrPhone);
+      const authEmail = isPhoneNumber ? 'rotimistly@gmail.com' : formData.emailOrPhone;
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+        email: authEmail,
         password: formData.password,
       });
 
@@ -151,13 +185,13 @@ export default function AdminAuth() {
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Admin Email</Label>
+                    <Label htmlFor="signin-email">Admin Email or Phone</Label>
                     <Input
                       id="signin-email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      placeholder="rotimistly@gmail.com"
+                      type="text"
+                      value={formData.emailOrPhone}
+                      onChange={(e) => setFormData({...formData, emailOrPhone: e.target.value})}
+                      placeholder="Enter admin credentials"
                       required
                     />
                   </div>
@@ -205,13 +239,13 @@ export default function AdminAuth() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Admin Email</Label>
+                    <Label htmlFor="signup-email">Admin Email or Phone</Label>
                     <Input
                       id="signup-email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      placeholder="rotimistly@gmail.com"
+                      type="text"
+                      value={formData.emailOrPhone}
+                      onChange={(e) => setFormData({...formData, emailOrPhone: e.target.value})}
+                      placeholder="Enter admin credentials"
                       required
                     />
                   </div>

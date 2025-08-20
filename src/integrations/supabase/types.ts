@@ -314,6 +314,45 @@ export type Database = {
         }
         Relationships: []
       }
+      news_updates: {
+        Row: {
+          admin_id: string
+          content: string
+          created_at: string
+          id: string
+          is_published: boolean | null
+          priority: string | null
+          published_at: string | null
+          title: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          priority?: string | null
+          published_at?: string | null
+          title: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          priority?: string | null
+          published_at?: string | null
+          title?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           booking_id: string | null
@@ -823,6 +862,7 @@ export type Database = {
           payment_methods: string[] | null
           paystack_subaccount_code: string | null
           phone: string | null
+          phone_number: string | null
           portfolio_urls: string[] | null
           preferred_currency: string | null
           preferred_payment_method: string | null
@@ -875,6 +915,7 @@ export type Database = {
           payment_methods?: string[] | null
           paystack_subaccount_code?: string | null
           phone?: string | null
+          phone_number?: string | null
           portfolio_urls?: string[] | null
           preferred_currency?: string | null
           preferred_payment_method?: string | null
@@ -927,6 +968,7 @@ export type Database = {
           payment_methods?: string[] | null
           paystack_subaccount_code?: string | null
           phone?: string | null
+          phone_number?: string | null
           portfolio_urls?: string[] | null
           preferred_currency?: string | null
           preferred_payment_method?: string | null
