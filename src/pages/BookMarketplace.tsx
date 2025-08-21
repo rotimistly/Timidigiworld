@@ -50,13 +50,13 @@ const BookMarketplace = () => {
               and more in our comprehensive digital marketplace. Connect with readers and authors worldwide.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link to="/products">
+              <Link to="https://good-newbooks.vercel.app">
                 <Button size="lg" className="w-full sm:w-auto">
                   <BookOpen className="h-5 w-5 mr-2" />
                   Browse Book Collection
                 </Button>
               </Link>
-              <Link to="/seller-dashboard">
+              <Link to="https://good-newbooks.vercel.app">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   Start Selling Books
                   <ArrowRight className="h-4 w-4 ml-2" />
@@ -152,7 +152,7 @@ const BookMarketplace = () => {
             our marketplace has everything you need.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/products">
+            <Link to="https://good-newbooks.vercel.app">
               <Button variant="secondary" size="lg" className="w-full sm:w-auto">
                 Explore Books Now
                 <BookOpen className="h-5 w-5 ml-2" />
