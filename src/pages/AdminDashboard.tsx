@@ -77,7 +77,7 @@ export default function AdminDashboard() {
     is_published: false
   });
 
-  useEffect(() => {
+/*  useEffect(() => {
     checkAdminAccess();
   }, [user]);
 
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
     }
     
     fetchAdminData();
-  };
+  }; */
 
   const fetchAdminData = async () => {
     setIsLoading(true);
