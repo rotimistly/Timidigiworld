@@ -96,7 +96,7 @@ serve(async (req) => {
       
       // Graceful fallback: if no Paystack key, simulate successful payment flow
       if (!paystackSecretKey) {
-        console.warn("PAYSTACK_SECRET_KEY not configured - falling back to simulated success flow");
+        console.log("PAYSTACK_SECRET_KEY not configured - falling back to simulated success flow");
 
         // Create completed order immediately
         const { data: order, error: orderError } = await supabaseAdmin

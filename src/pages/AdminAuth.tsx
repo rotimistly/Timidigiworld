@@ -33,7 +33,7 @@ export default function AdminAuth() {
     }
 
     // Only allow specific admin credentials
-    const allowedAdminCredentials = ['rotimistly@gmail.com', '08147838934'];
+    const allowedAdminCredentials = ['timidigialworld@gmail.com', 'marvellousoseh3@gmail.com', '08147838934'];
     if (!allowedAdminCredentials.includes(formData.emailOrPhone.toLowerCase())) {
       toast({
         title: "Access Denied",
