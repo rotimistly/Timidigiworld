@@ -45,7 +45,7 @@ export default function AdminAuth() {
 
     // Convert phone to email for Supabase auth if phone number provided
     const isPhoneNumber = /^\d+$/.test(formData.emailOrPhone);
-    const authEmail = isPhoneNumber ? 'rotimistly@gmail.com' : formData.emailOrPhone;
+    const authEmail = isPhoneNumber ? 'timidigialworld@gmail.com' : formData.emailOrPhone;
 
     setIsLoading(true);
     try {
