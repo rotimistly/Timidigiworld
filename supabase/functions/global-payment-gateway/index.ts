@@ -119,7 +119,7 @@ serve(async (req) => {
 
         if (orderError) throw orderError;
 
-        // If digital product, send email immediately
+        // If digital product, send email immediately and process payment split
         if (product.product_type === 'digital') {
           await supabaseAdmin.functions.invoke('send-digital-product', {
             body: { orderId: order.id, productId, deliveryEmail }
@@ -139,6 +139,16 @@ serve(async (req) => {
             title: "Payment Confirmed",
             message: `Your order has been confirmed. Tracking number: ${trackingNumber}`
           });
+        }
+
+        // Process payment split (75% to seller, 25% to platform)
+        try {
+          await supabaseAdmin.functions.invoke("process-payment-split", {
+            body: { orderId: order.id }
+          });
+        } catch (splitError) {
+          console.error("Payment split processing failed:", splitError);
+          // Don't fail the main process if split fails
         }
 
         const origin = req.headers.get("origin") || "https://qozthicyahnfsewsehys.supabase.co";
@@ -245,11 +255,21 @@ serve(async (req) => {
 
       if (orderError) throw orderError;
 
-      // For simulation, process the order immediately
+      // For simulation, process the order immediately and handle payment split
       if (product.product_type === 'digital') {
         await supabaseAdmin.functions.invoke('send-digital-product', {
           body: { orderId: order.id, productId, deliveryEmail }
         });
+      }
+
+      // Process payment split (75% to seller, 25% to platform)
+      try {
+        await supabaseAdmin.functions.invoke("process-payment-split", {
+          body: { orderId: order.id }
+        });
+      } catch (splitError) {
+        console.error("Payment split processing failed:", splitError);
+        // Don't fail the main process if split fails
       }
 
       return new Response(JSON.stringify({

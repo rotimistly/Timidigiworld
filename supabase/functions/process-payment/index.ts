@@ -98,41 +98,51 @@ serve(async (req) => {
         .update({ status: "completed" })
         .eq("id", order.id);
 
-      // If digital product, trigger email delivery
-      if (product.product_type === "digital") {
-        // Call send-digital-product function
-        await supabaseAdmin.functions.invoke("send-digital-product", {
-          body: { orderId: order.id }
-        });
-      } else {
-        // For physical products, generate tracking number
-        const trackingNumber = `TDW${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
-        await supabaseAdmin
-          .from("orders")
-          .update({ 
-            tracking_number: trackingNumber,
-            status: "completed" 
-          })
-          .eq("id", order.id);
+        // If digital product, trigger email delivery and process payment split
+        if (product.product_type === "digital") {
+          // Call send-digital-product function
+          await supabaseAdmin.functions.invoke("send-digital-product", {
+            body: { orderId: order.id }
+          });
+        } else {
+          // For physical products, generate tracking number
+          const trackingNumber = `TDW${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+          await supabaseAdmin
+            .from("orders")
+            .update({ 
+              tracking_number: trackingNumber,
+              status: "completed" 
+            })
+            .eq("id", order.id);
 
-        // Create notification for tracking
-        await supabaseAdmin.from("order_notifications").insert({
-          order_id: order.id,
-          user_id: user.id,
-          type: "paid",
-          title: "Payment Confirmed",
-          message: `Your order for "${product.title}" has been confirmed. Tracking number: ${trackingNumber}`
-        });
-      }
+          // Create notification for tracking
+          await supabaseAdmin.from("order_notifications").insert({
+            order_id: order.id,
+            user_id: user.id,
+            type: "paid",
+            title: "Payment Confirmed",
+            message: `Your order for "${product.title}" has been confirmed. Tracking number: ${trackingNumber}`
+          });
+        }
 
-      return new Response(JSON.stringify({ 
-        success: true, 
-        orderId: order.id,
-        trackingNumber: product.product_type === "physical" ? order.tracking_number : null
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+        // Process payment split (75% to seller, 25% to platform)
+        try {
+          await supabaseAdmin.functions.invoke("process-payment-split", {
+            body: { orderId: order.id }
+          });
+        } catch (splitError) {
+          console.error("Payment split processing failed:", splitError);
+          // Don't fail the main process if split fails
+        }
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          orderId: order.id,
+          trackingNumber: product.product_type === "physical" ? order.tracking_number : null
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
     } else {
       throw new Error("Payment failed");
     }

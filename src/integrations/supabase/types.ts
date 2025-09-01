@@ -608,6 +608,65 @@ export type Database = {
           },
         ]
       }
+      payment_splits_new: {
+        Row: {
+          buyer_id: string
+          created_at: string | null
+          id: string
+          order_id: string | null
+          payment_gateway: string | null
+          platform_amount: number
+          platform_paid: boolean | null
+          platform_reference: string | null
+          product_id: string
+          seller_amount: number
+          seller_paid: boolean | null
+          seller_reference: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          payment_gateway?: string | null
+          platform_amount: number
+          platform_paid?: boolean | null
+          platform_reference?: string | null
+          product_id: string
+          seller_amount: number
+          seller_paid?: boolean | null
+          seller_reference?: string | null
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          payment_gateway?: string | null
+          platform_amount?: number
+          platform_paid?: boolean | null
+          platform_reference?: string | null
+          product_id?: string
+          seller_amount?: number
+          seller_paid?: boolean | null
+          seller_reference?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_splits_new_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_images: {
         Row: {
           created_at: string | null
@@ -870,6 +929,7 @@ export type Database = {
           profile_image_url: string | null
           provider_phone: string | null
           region: string | null
+          routing_number: string | null
           skills: string[] | null
           social_links: Json | null
           specialties: string[] | null
@@ -923,6 +983,7 @@ export type Database = {
           profile_image_url?: string | null
           provider_phone?: string | null
           region?: string | null
+          routing_number?: string | null
           skills?: string[] | null
           social_links?: Json | null
           specialties?: string[] | null
@@ -976,6 +1037,7 @@ export type Database = {
           profile_image_url?: string | null
           provider_phone?: string | null
           region?: string | null
+          routing_number?: string | null
           skills?: string[] | null
           social_links?: Json | null
           specialties?: string[] | null
