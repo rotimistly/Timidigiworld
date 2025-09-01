@@ -17,6 +17,23 @@ export function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
   }, [user]);
 
   const checkAdminStatus = async () => {
+    // Check for special admin session first
+    const specialAdminSession = localStorage.getItem('admin_session');
+    if (specialAdminSession) {
+      try {
+        const session = JSON.parse(specialAdminSession);
+        if (session.isAdmin && session.timestamp > (Date.now() - 24 * 60 * 60 * 1000)) {
+          setIsAdmin(true);
+          setChecking(false);
+          return;
+        } else {
+          localStorage.removeItem('admin_session');
+        }
+      } catch (e) {
+        localStorage.removeItem('admin_session');
+      }
+    }
+
     if (!user) {
       setIsAdmin(false);
       setChecking(false);
@@ -47,8 +64,19 @@ export function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
     );
   }
 
-  if (!user || !isAdmin) {
-    return <Navigate to="/admin-auth" replace />;
+  // Check for special admin session
+  const specialAdminSession = localStorage.getItem('admin_session');
+  const hasSpecialAdminAccess = specialAdminSession && (() => {
+    try {
+      const session = JSON.parse(specialAdminSession);
+      return session.isAdmin && session.timestamp > (Date.now() - 24 * 60 * 60 * 1000);
+    } catch {
+      return false;
+    }
+  })();
+
+  if (!hasSpecialAdminAccess && (!user || !isAdmin)) {
+    return <Navigate to="/special-admin-login" replace />;
   }
 
   return <>{children}</>;

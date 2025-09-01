@@ -20,6 +20,7 @@ import { SupportChat } from "./components/support/SupportChat";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
 import AdminAuth from "./pages/AdminAuth";
+import SpecialAdminLogin from "./pages/SpecialAdminLogin";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => (
           } />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/admin-auth" element={<AdminAuth />} />
+          <Route path="/special-admin-login" element={<SpecialAdminLogin />} />
           <Route path="/admin-dashboard" element={
             <AdminProtectedRoute>
               <AdminDashboard />

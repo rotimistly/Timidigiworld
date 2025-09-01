@@ -230,15 +230,6 @@ export function AuthForm() {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button 
-            variant="link" 
-            onClick={() => window.location.href = '/admin-auth'}
-            className="text-sm text-muted-foreground hover:text-primary"
-          >
-            Admin Login →
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );
