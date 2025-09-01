@@ -143,7 +143,7 @@ serve(async (req) => {
 
         // Process payment split (75% to seller, 25% to platform)
         try {
-          await supabaseAdmin.functions.invoke("process-payment-split", {
+          await supabaseAdmin.functions.invoke("process-payment-splits", {
             body: { orderId: order.id }
           });
         } catch (splitError) {
@@ -264,7 +264,7 @@ serve(async (req) => {
 
       // Process payment split (75% to seller, 25% to platform)
       try {
-        await supabaseAdmin.functions.invoke("process-payment-split", {
+        await supabaseAdmin.functions.invoke("process-payment-splits", {
           body: { orderId: order.id }
         });
       } catch (splitError) {
