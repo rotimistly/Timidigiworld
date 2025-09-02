@@ -39,9 +39,15 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
         return;
       }
 
-      // Open the file directly in a new window for viewing on the platform
-      window.open(file_url, '_blank', 'noopener,noreferrer');
-      toast.success("Opening your product file...");
+      // Create download link and trigger download
+      const link = document.createElement('a');
+      link.href = file_url;
+      link.download = `${productTitle}.${file_url.split('.').pop() || 'file'}`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Download started successfully!");
 
     } catch (error: any) {
       console.error('Secure download error:', error);
@@ -66,7 +72,7 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
       ) : (
         <>
           <Download className="w-4 h-4 mr-2" />
-          View {productTitle}
+          Download {productTitle}
         </>
       )}
     </Button>

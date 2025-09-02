@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Contact from "./pages/Contact";
 import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
 import Dashboard from "./pages/Dashboard";
 import SellerDashboard from "./pages/SellerDashboard";
 import SellerProfile from "./pages/SellerProfile";
@@ -51,6 +52,7 @@ const App = () => (
               <Products />
             </ProtectedRoute>
           } />
+          <Route path="/product/:productId" element={<ProductDetails />} />
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />

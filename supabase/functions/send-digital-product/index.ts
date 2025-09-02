@@ -25,22 +25,17 @@ serve(async (req) => {
 
     console.log("Processing digital product delivery for order:", orderId);
 
-    // Get order details with buyer information
-    const { data: orderWithBuyer, error: orderError } = await supabaseAdmin
+    // Get order details 
+    const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
-      .select(`
-        *,
-        buyer:profiles!buyer_id(full_name, email)
-      `)
+      .select("*")
       .eq("id", orderId)
       .single();
 
-    if (orderError || !orderWithBuyer) {
+    if (orderError || !order) {
       console.error("Order not found:", orderError);
       throw new Error("Order not found");
     }
-
-    const order = orderWithBuyer;
 
     // Get product details separately
     const { data: product, error: productError } = await supabaseAdmin
@@ -59,12 +54,15 @@ serve(async (req) => {
       throw new Error("This endpoint is only for digital products");
     }
 
-    // Get buyer profile for additional email/name info - use buyer relation first
-    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(order.buyer_id);
+    // Get buyer profile and auth info
+    const [authUserResult, profileResult] = await Promise.all([
+      supabaseAdmin.auth.admin.getUserById(order.buyer_id),
+      supabaseAdmin.from("profiles").select("full_name").eq("user_id", order.buyer_id).single()
+    ]);
     
-    // Priority: delivery_email > buyer profile email > auth email
-    const buyerEmail = order.delivery_email || order.buyer?.email || authUser.user?.email;
-    const buyerName = order.buyer?.full_name || 'Customer';
+    // Priority: delivery_email > auth email
+    const buyerEmail = order.delivery_email || authUserResult.data?.user?.email;
+    const buyerName = profileResult.data?.full_name || authUserResult.data?.user?.user_metadata?.full_name || 'Customer';
 
     if (!buyerEmail) {
       console.error("No buyer email found for order:", orderId);

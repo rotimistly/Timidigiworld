@@ -14,19 +14,28 @@ serve(async (req) => {
   console.log("Payment gateway request received");
   
   try {
-    const { productId, paymentMethod, amount, deliveryEmail, currency = 'USD', country = 'US' } = await req.json();
-    console.log("Request data:", { productId, paymentMethod, amount, deliveryEmail, currency, country });
+    const { productId, paymentMethod, amount, deliveryEmail, currency = 'USD', country = 'US', guestCheckout = false } = await req.json();
+    console.log("Request data:", { productId, paymentMethod, amount, deliveryEmail, currency, country, guestCheckout });
 
-    // Create Supabase client for user auth
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    // Handle authentication - allow guest checkout
+    let user = null;
+    let userEmail = deliveryEmail;
+    
+    if (!guestCheckout) {
+      const authHeader = req.headers.get("Authorization")!;
+      const token = authHeader.replace("Bearer ", "");
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      );
 
-    const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user) throw new Error("User not authenticated");
+      const { data: { user: authUser } } = await supabase.auth.getUser(token);
+      if (!authUser) throw new Error("User not authenticated");
+      user = authUser;
+      userEmail = user.email;
+    }
+
+    if (!userEmail) throw new Error("Email is required");
 
     // Create Supabase admin client
     const supabaseAdmin = createClient(
@@ -132,13 +141,15 @@ serve(async (req) => {
             .update({ tracking_number: trackingNumber })
             .eq("id", order.id);
 
-          await supabaseAdmin.from("order_notifications").insert({
-            order_id: order.id,
-            user_id: user.id,
-            type: "paid",
-            title: "Payment Confirmed",
-            message: `Your order has been confirmed. Tracking number: ${trackingNumber}`
-          });
+            if (user?.id) {
+              await supabaseAdmin.from("order_notifications").insert({
+                order_id: order.id,
+                user_id: user.id,
+                type: "paid",
+                title: "Payment Confirmed",
+                message: `Your order has been confirmed. Tracking number: ${trackingNumber}`
+              });
+            }
         }
 
         // Process payment split (75% to seller, 25% to platform)
@@ -175,17 +186,18 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: user.email,
+          email: userEmail,
           amount: Math.round(convertedAmount * 100), // Paystack expects amount in kobo
           reference,
           currency: "NGN",
           callback_url: `${new URL(req.headers.get("origin") || "https://qozthicyahnfsewsehys.supabase.co").origin}/payment-success?reference=${reference}`,
           metadata: {
             productId,
-            userId: user.id,
+            userId: user?.id || 'guest',
             isAdminProduct,
             commissionAmount: commissionAmount * 100,
             sellerAmount: sellerAmount * 100,
+            guestEmail: guestCheckout ? userEmail : null
           }
         }),
       });
@@ -200,23 +212,23 @@ serve(async (req) => {
 
       // Create order record
       const orderTable = isAdminProduct ? 'orders' : 'orders';
-      const { data: order, error: orderError } = await supabaseAdmin
-        .from(orderTable)
-        .insert({
-          product_id: productId,
-          buyer_id: user.id,
-          amount: totalAmount,
-          payment_method: paymentMethod,
-          payment_gateway: "paystack",
-          paystack_reference: reference,
-          delivery_email: deliveryEmail,
-          commission_rate: commissionRate,
-          commission_amount: commissionAmount,
-          seller_amount: sellerAmount,
-          status: "pending"
-        })
-        .select()
-        .single();
+        const { data: order, error: orderError } = await supabaseAdmin
+          .from(orderTable)
+          .insert({
+            product_id: productId,
+            buyer_id: user?.id || null,
+            amount: totalAmount,
+            payment_method: paymentMethod,
+            payment_gateway: "paystack",
+            paystack_reference: reference,
+            delivery_email: deliveryEmail,
+            commission_rate: commissionRate,
+            commission_amount: commissionAmount,
+            seller_amount: sellerAmount,
+            status: "pending"
+          })
+          .select()
+          .single();
 
       if (orderError) throw orderError;
 
@@ -235,23 +247,23 @@ serve(async (req) => {
       const simulatedPaymentUrl = `${req.headers.get("origin")}/payment-success?reference=${reference}&status=success`;
       
       // Create order record
-      const { data: order, error: orderError } = await supabaseAdmin
-        .from("orders")
-        .insert({
-          product_id: productId,
-          buyer_id: user.id,
-          amount: totalAmount,
-          payment_method: paymentMethod,
-          payment_gateway: "simulation",
-          paystack_reference: reference,
-          delivery_email: deliveryEmail,
-          commission_rate: commissionRate,
-          commission_amount: commissionAmount,
-          seller_amount: sellerAmount,
-          status: "completed" // Simulated as completed
-        })
-        .select()
-        .single();
+        const { data: order, error: orderError } = await supabaseAdmin
+          .from("orders")
+          .insert({
+            product_id: productId,
+            buyer_id: user?.id || null,
+            amount: totalAmount,
+            payment_method: paymentMethod,
+            payment_gateway: "simulation",
+            paystack_reference: reference,
+            delivery_email: deliveryEmail,
+            commission_rate: commissionRate,
+            commission_amount: commissionAmount,
+            seller_amount: sellerAmount,
+            status: "completed" // Simulated as completed
+          })
+          .select()
+          .single();
 
       if (orderError) throw orderError;
 

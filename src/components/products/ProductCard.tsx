@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PaymentForm } from '@/components/payment/PaymentForm';
 import { ProductChatWindow } from '@/components/chat/ProductChatWindow';
+import { ShareButton } from '@/components/products/ShareButton';
 
 interface ProductCardProps {
   product: {
@@ -90,24 +91,31 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
         </div>
       </div>
       
-      <div className="flex gap-2">
-        {!product.is_admin_product && product.seller_id && (
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          {!product.is_admin_product && product.seller_id && (
+            <Button 
+              variant="outline" 
+              onClick={handleContactSeller}
+              className="flex-1"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Contact
+            </Button>
+          )}
           <Button 
-            variant="outline" 
-            onClick={handleContactSeller}
+            onClick={() => setShowPayment(true)}
             className="flex-1"
           >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Contact
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Buy Now
           </Button>
-        )}
-        <Button 
-          onClick={() => setShowPayment(true)}
-          className="flex-1"
-        >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Buy Now
-        </Button>
+        </div>
+        <ShareButton 
+          productId={product.id} 
+          productTitle={product.title} 
+          className="w-full"
+        />
       </div>
     </CardContent>
   );
