@@ -16,37 +16,50 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
   const handleSecureDownload = async () => {
     setIsLoading(true);
     try {
-      // Call secure function to get download access
-      const { data, error } = await supabase.rpc('get_digital_product_access', {
-        order_uuid: orderId
+      // Use secure download function instead of direct access
+      const { data, error } = await supabase.functions.invoke('secure-download', {
+        body: { orderId }
       });
 
       if (error) {
-        console.error('Download access error:', error);
+        console.error('Secure download error:', error);
         toast.error("Access denied. Please ensure your order is completed.");
         return;
       }
 
-      if (!data || data.length === 0) {
-        toast.error("No download available for this order.");
+      if (!data.success || !data.downloadUrl) {
+        toast.error("Download not available.");
         return;
       }
 
-      const { file_url } = data[0];
-      
-      if (!file_url) {
-        toast.error("Download file not available.");
+      // Use the secure download URL with authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Authentication required for download.");
         return;
       }
 
-      // Create download link and trigger download
+      // Create a temporary link to trigger download
+      const response = await fetch(data.downloadUrl, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = file_url;
-      link.download = `${productTitle}.${file_url.split('.').pop() || 'file'}`;
-      link.target = '_blank';
+      link.href = url;
+      link.download = `${data.productTitle}.${data.downloadUrl.split('.').pop() || 'file'}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
       toast.success("Download started successfully!");
 
     } catch (error: any) {

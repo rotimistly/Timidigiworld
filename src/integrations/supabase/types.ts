@@ -216,6 +216,36 @@ export type Database = {
         }
         Relationships: []
       }
+      download_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          order_id: string
+          token: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id: string
+          token: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id?: string
+          token?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_performance_logs: {
         Row: {
           created_at: string | null
@@ -1472,6 +1502,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: undefined
       }
+      generate_download_token: {
+        Args: { p_order_id: string; p_user_id: string }
+        Returns: string
+      }
       get_booking_history_for_user: {
         Args: { user_uuid: string }
         Returns: {
@@ -1513,6 +1547,15 @@ export type Database = {
       get_user_role: {
         Args: { user_id: string }
         Returns: string
+      }
+      validate_download_token: {
+        Args: { p_token: string; p_user_id: string }
+        Returns: {
+          file_url: string
+          order_id: string
+          product_id: string
+          product_title: string
+        }[]
       }
     }
     Enums: {
