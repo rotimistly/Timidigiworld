@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PaymentForm } from '@/components/payment/PaymentForm';
 import { ProductChatWindow } from '@/components/chat/ProductChatWindow';
 import { ShareButton } from '@/components/products/ShareButton';
+import { useNavigate } from 'react-router-dom';
 
 interface ProductCardProps {
   product: {
@@ -36,6 +37,7 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
   const [showChat, setShowChat] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleContactSeller = async () => {
     if (!user || !product.seller_id) return;
@@ -43,7 +45,7 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
   };
 
   const cardContent = (
-    <div className="aspect-video relative bg-gradient-to-br from-purple-100 to-blue-100">
+    <div className="aspect-video relative bg-gradient-to-br from-purple-100 to-blue-100 cursor-pointer" onClick={() => navigate(`/product/${product.id}`)}>
       {product.image_url ? (
         <img 
           src={product.image_url} 
@@ -76,7 +78,11 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
 
   const productInfo = (
     <CardContent className="p-4">
-      <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.title}</h3>
+      <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+        <button className="text-left hover:underline" onClick={() => navigate(`/product/${product.id}`)}>
+          {product.title}
+        </button>
+      </h3>
       <p className="text-gray-600 text-sm mb-3 line-clamp-2">
         {product.description || "No description available"}
       </p>

@@ -23,7 +23,18 @@ export const ShareButton = ({ productId, productTitle, className }: ShareButtonP
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
       setCopied(true);
       toast({
         title: "Link copied!",
@@ -33,7 +44,7 @@ export const ShareButton = ({ productId, productTitle, className }: ShareButtonP
     } catch (err) {
       toast({
         title: "Failed to copy",
-        description: "Please copy the link manually",
+        description: shareUrl,
         variant: "destructive",
       });
     }
@@ -54,7 +65,7 @@ export const ShareButton = ({ productId, productTitle, className }: ShareButtonP
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className={className}>
+        <Button variant="outline" size="sm" className={className} onClick={shareViaWeb}>
           <Share2 className="h-4 w-4 mr-2" />
           Share
         </Button>

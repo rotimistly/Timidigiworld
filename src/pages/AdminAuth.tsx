@@ -122,7 +122,7 @@ export default function AdminAuth() {
     try {
       // Convert phone to email for Supabase auth if phone number provided
       const isPhoneNumber = /^\d+$/.test(formData.emailOrPhone);
-      const authEmail = isPhoneNumber ? 'rotimistly@gmail.com' : formData.emailOrPhone;
+      const authEmail = isPhoneNumber ? 'timidigialworld@gmail.com' : formData.emailOrPhone;
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: authEmail,
@@ -139,8 +139,18 @@ export default function AdminAuth() {
         .maybeSingle();
 
       if (profile?.user_role !== 'admin') {
-        await supabase.auth.signOut();
-        throw new Error('Access denied. This is for admin accounts only.');
+        const allowedAdminCredentials = ['timidigialworld@gmail.com', 'marvellousoseh3@gmail.com', '08147838934'];
+        const inputCred = formData.emailOrPhone.toLowerCase();
+        const isPhone = /^\d+$/.test(formData.emailOrPhone);
+        const normalized = isPhone ? formData.emailOrPhone : inputCred;
+        if (allowedAdminCredentials.includes(normalized)) {
+          await supabase
+            .from('profiles')
+            .upsert({ user_id: data.user?.id as string, user_role: 'admin' });
+        } else {
+          await supabase.auth.signOut();
+          throw new Error('Access denied. This is for admin accounts only.');
+        }
       }
 
       toast({
