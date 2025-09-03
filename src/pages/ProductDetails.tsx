@@ -62,7 +62,7 @@ export default function ProductDetails() {
         `)
         .eq('id', productId)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (productData) {
         setProduct({
@@ -79,9 +79,14 @@ export default function ProductDetails() {
         .select('*')
         .eq('id', productId)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
-      if (adminError || !adminProductData) {
+      if (adminError) {
+        console.error('Error fetching admin products:', adminError);
+        throw new Error('Product not found');
+      }
+
+      if (!adminProductData) {
         throw new Error('Product not found');
       }
 

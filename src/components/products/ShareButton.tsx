@@ -50,13 +50,18 @@ export const ShareButton = ({ productId, productTitle, className }: ShareButtonP
     }
   };
 
-  const shareViaWeb = () => {
+  const shareViaWeb = async () => {
     if (navigator.share) {
-      navigator.share({
-        title: productTitle,
-        text: `Check out this amazing product: ${productTitle}`,
-        url: shareUrl,
-      });
+      try {
+        await navigator.share({
+          title: productTitle,
+          text: `Check out this amazing product: ${productTitle}`,
+          url: shareUrl,
+        });
+      } catch (error) {
+        // If share fails (permission denied, canceled, etc.), fall back to copy
+        copyToClipboard();
+      }
     } else {
       copyToClipboard();
     }
@@ -65,7 +70,7 @@ export const ShareButton = ({ productId, productTitle, className }: ShareButtonP
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className={className} onClick={shareViaWeb}>
+        <Button variant="outline" size="sm" className={className}>
           <Share2 className="h-4 w-4 mr-2" />
           Share
         </Button>
