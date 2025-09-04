@@ -160,6 +160,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "conversations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "secure_products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       conversations_v2: {
@@ -573,6 +580,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "secure_products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       payment_splits: {
@@ -727,6 +741,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "secure_products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       product_messages: {
@@ -771,6 +792,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "product_messages_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "secure_products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       product_reviews: {
@@ -807,6 +835,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "secure_products"
             referencedColumns: ["id"]
           },
         ]
@@ -1496,6 +1531,114 @@ export type Database = {
         }
         Relationships: []
       }
+      secure_admin_products: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          file_url: string | null
+          id: string | null
+          image_url: string | null
+          price: number | null
+          product_type: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          file_url?: never
+          id?: string | null
+          image_url?: string | null
+          price?: number | null
+          product_type?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          file_url?: never
+          id?: string | null
+          image_url?: string | null
+          price?: number | null
+          product_type?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      secure_products: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string | null
+          image_url: string | null
+          price: number | null
+          product_type: string | null
+          seller_id: string | null
+          shipping_cost: number | null
+          shipping_required: boolean | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          weight: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: never
+          id?: string | null
+          image_url?: string | null
+          price?: number | null
+          product_type?: string | null
+          seller_id?: string | null
+          shipping_cost?: number | null
+          shipping_required?: boolean | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          weight?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: never
+          id?: string | null
+          image_url?: string | null
+          price?: number | null
+          product_type?: string | null
+          seller_id?: string | null
+          shipping_cost?: number | null
+          shipping_required?: boolean | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          weight?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       clear_pending_tracking_history: {
@@ -1540,7 +1683,8 @@ export type Database = {
       get_digital_product_access: {
         Args: { order_uuid: string }
         Returns: {
-          file_url: string
+          access_granted: boolean
+          order_status: string
           product_title: string
         }[]
       }

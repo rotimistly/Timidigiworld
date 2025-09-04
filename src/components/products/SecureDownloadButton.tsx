@@ -16,45 +16,48 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
   const handleSecureDownload = async () => {
     setIsLoading(true);
     try {
-      // Use secure download function instead of direct access
+      // First, get a secure download token
       const { data, error } = await supabase.functions.invoke('secure-download', {
         body: { orderId }
       });
 
-      if (error) {
+      if (error || !data.success) {
         console.error('Secure download error:', error);
         toast.error("Access denied. Please ensure your order is completed.");
         return;
       }
 
-      if (!data.success || !data.downloadUrl) {
+      if (!data.downloadUrl) {
         toast.error("Download not available.");
         return;
       }
 
-      // Use the secure download URL with authorization
+      // Get user session for authorization
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         toast.error("Authentication required for download.");
         return;
       }
 
-      // Create a temporary link to trigger download
+      // Use the secure download URL with authorization
       const response = await fetch(data.downloadUrl, {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       if (!response.ok) {
-        throw new Error('Download failed');
+        throw new Error(`Download failed: ${response.status}`);
       }
 
+      // Create blob and download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${data.productTitle}.${data.downloadUrl.split('.').pop() || 'file'}`;
+      link.download = `${data.productTitle || productTitle}.${getFileExtension(data.downloadUrl)}`;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -68,6 +71,11 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getFileExtension = (url: string) => {
+    const parts = url.split('.');
+    return parts.length > 1 ? parts.pop() : 'file';
   };
 
   return (
