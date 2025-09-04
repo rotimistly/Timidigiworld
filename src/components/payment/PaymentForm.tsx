@@ -182,7 +182,7 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
             <p className="text-sm text-muted-foreground">
               You will be redirected to complete your payment securely using {paymentMethod === 'card' ? 'your card' : paymentMethod === 'bank_transfer' ? 'bank transfer' : paymentMethod.toUpperCase()}.
               <br />
-              <strong>Commission:</strong> 25% platform fee, 75% goes to seller
+              <strong>Commission:</strong> 25% platform fee, 70% goes to seller
               <br />
               <strong>Seller Payment:</strong> Funds go directly to seller's linked bank account
             </p>

@@ -38,10 +38,10 @@ serve(async (req) => {
 
     console.log("Order found:", order);
 
-    // Calculate split amounts (75% to seller, 25% to platform)
+    // Calculate split amounts (70% to seller, 25% to platform)
     const totalAmount = parseFloat(order.amount);
     const platformAmount = totalAmount * 0.25;
-    const sellerAmount = totalAmount * 0.75;
+    const sellerAmount = totalAmount * 0.70;
 
     console.log("Split calculation:", { totalAmount, platformAmount, sellerAmount });
 

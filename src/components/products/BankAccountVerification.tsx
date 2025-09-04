@@ -213,7 +213,7 @@ export const BankAccountVerification = ({ profile, onVerificationUpdate }: BankA
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
                 <AlertCircle className="h-4 w-4 inline mr-2" />
-                Add your bank account to receive payments from sales (75% commission)
+                Add your bank account to receive payments from sales (70% commission)
               </p>
             </div>
 

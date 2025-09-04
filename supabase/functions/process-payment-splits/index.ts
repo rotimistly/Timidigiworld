@@ -42,7 +42,7 @@ serve(async (req) => {
 
     const totalAmount = parseFloat(order.amount.toString());
     const platformAmount = totalAmount * 0.25; // 25% platform fee
-    const sellerAmount = totalAmount * 0.75;  // 75% to seller
+    const sellerAmount = totalAmount * 0.70;  // 70% to seller
 
     console.log("Processing payment split:", {
       orderId,
@@ -55,9 +55,47 @@ serve(async (req) => {
     // Get seller's bank details
     const { data: sellerProfile } = await supabaseAdmin
       .from("profiles")
-      .select("bank_name, account_number, account_name, bank_code")
+      .select("bank_name, account_number, account_name, bank_code, paystack_subaccount_code")
       .eq("user_id", order.products.seller_id)
       .single();
+
+    // If using Paystack split payments with subaccounts, payment is already split
+    if (sellerProfile?.paystack_subaccount_code) {
+      console.log("Using Paystack split payment with subaccount:", sellerProfile.paystack_subaccount_code);
+      
+      // Just record the split for tracking - payment already split by Paystack
+      await supabaseAdmin.from("payment_splits_new").insert({
+        order_id: orderId,
+        buyer_id: order.buyer_id,
+        product_id: order.product_id,
+        total_amount: totalAmount,
+        platform_amount: platformAmount,
+        seller_amount: sellerAmount,
+        platform_paid: true, // Already handled by Paystack
+        seller_paid: true,   // Already handled by Paystack
+        seller_reference: `PAYSTACK_SPLIT_${orderId}`
+      });
+
+      // Create notification for seller
+      await supabaseAdmin.from("order_notifications").insert({
+        order_id: orderId,
+        user_id: order.products.seller_id,
+        type: "payment_received",
+        title: "Payment Received",
+        message: `You've received ₦${sellerAmount.toFixed(2)} from the sale of "${order.products.title}" via Paystack split payment.`
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: "Payment split handled by Paystack",
+        platformAmount,
+        sellerAmount,
+        paymentMethod: "paystack_split"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     if (!sellerProfile?.bank_name || !sellerProfile?.account_number) {
       console.log("Seller bank details not complete, skipping transfer");

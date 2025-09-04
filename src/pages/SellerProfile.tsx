@@ -100,10 +100,48 @@ export default function SellerProfile() {
 
       if (error) throw error;
 
-      toast({
-        title: "Profile updated successfully",
-        description: "Your seller profile has been saved.",
-      });
+      // If bank details are complete, create/update Paystack subaccount
+      if (profile.bank_name && profile.account_number && profile.account_name && profile.bank_code) {
+        try {
+          const { error: subaccountError } = await supabase.functions.invoke('create-paystack-subaccount', {
+            body: {
+              userId: user.id,
+              bankDetails: {
+                bank_code: profile.bank_code,
+                account_number: profile.account_number,
+                account_name: profile.account_name,
+                phone: profile.phone
+              }
+            }
+          });
+
+          if (subaccountError) {
+            console.error("Subaccount creation failed:", subaccountError);
+            toast({
+              title: "Profile saved with warning",
+              description: "Bank details saved but Paystack subaccount creation failed. Payments may be delayed.",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Profile updated successfully",
+              description: "Your seller profile and payment details have been configured.",
+            });
+          }
+        } catch (subaccountError) {
+          console.error("Subaccount creation error:", subaccountError);
+          toast({
+            title: "Profile saved with warning", 
+            description: "Bank details saved but payment setup incomplete. Contact support if needed.",
+            variant: "default",
+          });
+        }
+      } else {
+        toast({
+          title: "Profile updated successfully",
+          description: "Your seller profile has been saved.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error saving profile",
@@ -231,7 +269,7 @@ export default function SellerProfile() {
                   <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
                   <div className="text-sm text-blue-700">
                     <p className="font-medium mb-1">Payment Information</p>
-                    <p>Add your bank details to receive payments. You'll receive 75% of each sale (25% goes to platform fees).</p>
+                    <p>Add your bank details to receive payments. You'll receive 70% of each sale (25% goes to platform fees). Your bank account will be registered as a Paystack subaccount for automatic payment splits.</p>
                   </div>
                 </div>
               </CardHeader>

@@ -125,7 +125,7 @@ serve(async (req) => {
           });
         }
 
-        // Process payment split (75% to seller, 25% to platform)
+        // Process payment split (70% to seller, 25% to platform)
         try {
           await supabaseAdmin.functions.invoke("process-payment-split", {
             body: { orderId: order.id }

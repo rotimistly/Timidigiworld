@@ -44,10 +44,10 @@ serve(async (req) => {
 
     const totalAmount = parseFloat(amount);
     
-    // FIXED COMMISSION: Platform gets exactly 25%, seller gets 75%
+    // FIXED COMMISSION: Platform gets exactly 25%, seller gets 70%
     const commissionRate = 0.25; // 25% for TimiDigiWorld
     const commissionAmount = totalAmount * commissionRate;
-    const sellerAmount = totalAmount - commissionAmount;
+    const sellerAmount = totalAmount * 0.70; // 70% for seller
 
     // Create reference for Paystack
     const reference = `TDW${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;

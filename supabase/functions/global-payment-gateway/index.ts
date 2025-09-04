@@ -87,10 +87,12 @@ serve(async (req) => {
     const totalAmount = parseFloat(amount);
     const convertedAmount = totalAmount * exchangeRate;
     
-    // Commission logic - admin products get 100%, regular products get 75%
+    // Commission logic - admin products get 100%, regular products get 70%
     const commissionRate = isAdminProduct ? 0 : 0.25;
+    const platformRate = isAdminProduct ? 0 : 0.25;
+    const sellerRate = isAdminProduct ? 1 : 0.70;
     const commissionAmount = totalAmount * commissionRate;
-    const sellerAmount = totalAmount - commissionAmount;
+    const sellerAmount = totalAmount * sellerRate;
 
     // Create reference for payment gateway
     const reference = `TDW${Date.now()}${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
@@ -152,7 +154,7 @@ serve(async (req) => {
             }
         }
 
-        // Process payment split (75% to seller, 25% to platform)
+        // Process payment split (70% to seller, 25% to platform)
         try {
           await supabaseAdmin.functions.invoke("process-payment-splits", {
             body: { orderId: order.id }
@@ -179,27 +181,49 @@ serve(async (req) => {
 
       console.log("Initializing Paystack payment...");
       
+      // Get seller's subaccount code if not admin product
+      let subaccountCode = null;
+      if (!isAdminProduct && product.seller_id) {
+        const { data: sellerProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("paystack_subaccount_code")
+          .eq("user_id", product.seller_id)
+          .single();
+        
+        subaccountCode = sellerProfile?.paystack_subaccount_code;
+        console.log("Seller subaccount code:", subaccountCode);
+      }
+      
+      const paymentBody: any = {
+        email: userEmail,
+        amount: Math.round(convertedAmount * 100), // Paystack expects amount in kobo
+        reference,
+        currency: "NGN",
+        callback_url: `${new URL(req.headers.get("origin") || "https://qozthicyahnfsewsehys.supabase.co").origin}/payment-success?reference=${reference}`,
+        metadata: {
+          productId,
+          userId: user?.id || 'guest',
+          isAdminProduct,
+          commissionAmount: commissionAmount * 100,
+          sellerAmount: sellerAmount * 100,
+          guestEmail: guestCheckout ? userEmail : null
+        }
+      };
+
+      // Add split payment if subaccount exists
+      if (subaccountCode && !isAdminProduct) {
+        paymentBody.subaccount = subaccountCode;
+        paymentBody.transaction_charge = Math.round(totalAmount * 0.25 * 100); // Platform gets 25%
+        paymentBody.bearer = "subaccount"; // Subaccount pays transaction fees
+      }
+      
       paymentResponse = await fetch("https://api.paystack.co/transaction/initialize", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${paystackSecretKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: userEmail,
-          amount: Math.round(convertedAmount * 100), // Paystack expects amount in kobo
-          reference,
-          currency: "NGN",
-          callback_url: `${new URL(req.headers.get("origin") || "https://qozthicyahnfsewsehys.supabase.co").origin}/payment-success?reference=${reference}`,
-          metadata: {
-            productId,
-            userId: user?.id || 'guest',
-            isAdminProduct,
-            commissionAmount: commissionAmount * 100,
-            sellerAmount: sellerAmount * 100,
-            guestEmail: guestCheckout ? userEmail : null
-          }
-        }),
+        body: JSON.stringify(paymentBody),
       });
 
       const paystackData = await paymentResponse.json();
@@ -274,7 +298,7 @@ serve(async (req) => {
         });
       }
 
-      // Process payment split (75% to seller, 25% to platform)
+      // Process payment split (70% to seller, 25% to platform)
       try {
         await supabaseAdmin.functions.invoke("process-payment-splits", {
           body: { orderId: order.id }
