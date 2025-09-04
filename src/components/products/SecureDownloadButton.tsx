@@ -16,53 +16,37 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
   const handleSecureDownload = async () => {
     setIsLoading(true);
     try {
-      // First, get a secure download token
-      const { data, error } = await supabase.functions.invoke('secure-download', {
-        body: { orderId }
+      // Call secure function to get download access
+      const { data, error } = await supabase.rpc('get_digital_product_access', {
+        order_uuid: orderId
       });
 
-      if (error || !data.success) {
-        console.error('Secure download error:', error);
+      if (error) {
+        console.error('Download access error:', error);
         toast.error("Access denied. Please ensure your order is completed.");
         return;
       }
 
-      if (!data.downloadUrl) {
-        toast.error("Download not available.");
+      if (!data || data.length === 0) {
+        toast.error("No download available for this order.");
         return;
       }
 
-      // Get user session for authorization
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        toast.error("Authentication required for download.");
+      const { file_url } = data[0];
+      
+      if (!file_url) {
+        toast.error("Download file not available.");
         return;
       }
 
-      // Use the secure download URL with authorization
-      const response = await fetch(data.downloadUrl, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.status}`);
-      }
-
-      // Create blob and download
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Create download link and trigger download
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `${data.productTitle || productTitle}.${getFileExtension(data.downloadUrl)}`;
-      link.style.display = 'none';
+      link.href = file_url;
+      link.download = `${productTitle}.${file_url.split('.').pop() || 'file'}`;
+      link.target = '_blank';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
       toast.success("Download started successfully!");
 
     } catch (error: any) {
@@ -71,11 +55,6 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getFileExtension = (url: string) => {
-    const parts = url.split('.');
-    return parts.length > 1 ? parts.pop() : 'file';
   };
 
   return (

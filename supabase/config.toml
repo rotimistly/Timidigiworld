@@ -1,7 +1,1 @@
 project_id = "qozthicyahnfsewsehys"
-
-[functions.download-file]
-verify_jwt = false
-
-[functions.secure-download]
-verify_jwt = true
