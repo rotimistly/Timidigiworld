@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { ShareButton } from '@/components/products/ShareButton';
+
 
 interface ProductWithProfiles {
   id: string;
@@ -230,10 +230,6 @@ export default function ProductDetails() {
                     )}
                   </div>
                 </div>
-                <ShareButton 
-                  productId={product.id} 
-                  productTitle={product.title} 
-                />
               </div>
               
               <p className="text-lg text-gray-600 mb-6">

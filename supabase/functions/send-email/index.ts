@@ -27,7 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending ${type} email to:`, to);
 
     const emailResponse = await resend.emails.send({
-      from: "TimiDigiWorld <noreply@resend.dev>",
+      from: "TimiDigiWorld <onboarding@resend.dev>",
       to: [to],
       subject: subject,
       html: html,
@@ -39,7 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (type === 'contact') {
       try {
         await resend.emails.send({
-          from: "TimiDigiWorld <noreply@resend.dev>",
+          from: "TimiDigiWorld <onboarding@resend.dev>",
           to: ["Rotimistly@gmail.com"],
           subject: `New Contact Form Submission: ${subject}`,
           html: `
