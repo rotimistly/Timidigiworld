@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PaymentForm } from '@/components/payment/PaymentForm';
 import { ProductChatWindow } from '@/components/chat/ProductChatWindow';
-import { ShareButton } from '@/components/products/ShareButton';
+
 import { useNavigate } from 'react-router-dom';
 
 interface ProductCardProps {
@@ -117,11 +117,6 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
             Buy Now
           </Button>
         </div>
-        <ShareButton 
-          productId={product.id} 
-          productTitle={product.title} 
-          className="w-full"
-        />
       </div>
     </CardContent>
   );

@@ -65,25 +65,38 @@ export const BankAccountVerification = ({ profile, onVerificationUpdate }: BankA
 
     setVerifying(true);
     try {
-      // Simulate account verification (in real app, you'd call Paystack's resolve account endpoint)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // For demo purposes, generate a mock account name
-      const mockAccountName = `${user?.email?.split('@')[0]?.toUpperCase() || 'USER'} ACCOUNT`;
-      
-      setBankDetails(prev => ({
-        ...prev,
-        account_name: mockAccountName
-      }));
-
-      toast({
-        title: "Account Verified",
-        description: "Bank account details have been verified successfully",
+      // Verify account name with Paystack and create subaccount
+      const { data, error } = await supabase.functions.invoke('create-paystack-subaccount', {
+        body: {
+          userId: user?.id,
+          bankDetails: {
+            bank_code: bankDetails.bank_code,
+            account_number: bankDetails.account_number,
+            phone: profile?.phone || profile?.contact_phone
+          }
+        }
       });
-    } catch (error) {
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: "Bank Account Verified & Subaccount Created",
+          description: data.message,
+        });
+        
+        // Account name should come from Paystack verification
+        setBankDetails(prev => ({
+          ...prev,
+          account_name: data.account_name || prev.account_name
+        }));
+        onVerificationUpdate();
+      }
+    } catch (error: any) {
+      console.error('Account verification error:', error);
       toast({
-        title: "Verification Failed",
-        description: "Could not verify account details. Please check and try again.",
+        title: "Verification Failed", 
+        description: error.message || "Could not verify account details",
         variant: "destructive",
       });
     } finally {

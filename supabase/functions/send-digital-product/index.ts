@@ -79,7 +79,7 @@ serve(async (req) => {
 
     // Send email with digital product
     const emailResponse = await resend.emails.send({
-      from: "TimiDigiWorld <onboarding@resend.dev>", // Using default resend domain
+      from: "TimiDigiWorld <no-reply@timidigiworld.com>", // Use your domain
       to: [buyerEmail],
       subject: `Your Digital Product: ${product.title}`,
       html: `
