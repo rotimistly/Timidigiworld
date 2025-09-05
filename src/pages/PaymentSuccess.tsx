@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, Package, ArrowRight, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { SecureDownloadButton } from '@/components/products/SecureDownloadButton';
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -117,10 +118,17 @@ export default function PaymentSuccess() {
           <div className="bg-muted/50 p-4 rounded-lg">
             <h4 className="font-medium mb-2">What's Next?</h4>
             {isDigital ? (
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✓ Payment confirmed</p>
-                <p>✓ Digital product email sent</p>
-                <p>✓ Check your inbox for download link</p>
+              <div className="space-y-3">
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>✓ Payment confirmed</p>
+                  <p>✓ Digital product ready for download</p>
+                  <p>✓ Email confirmation sent</p>
+                </div>
+                <SecureDownloadButton 
+                  orderId={order?.id}
+                  productTitle={product?.title || 'Your Purchase'}
+                  className="w-full"
+                />
               </div>
             ) : (
               <div className="space-y-2 text-sm text-muted-foreground">

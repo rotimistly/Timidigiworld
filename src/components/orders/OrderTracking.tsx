@@ -6,6 +6,7 @@ import { Package, Truck, CheckCircle, Clock, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { SecureDownloadButton } from '@/components/products/SecureDownloadButton';
 
 interface Order {
   id: string;
@@ -233,11 +234,20 @@ export function OrderTracking() {
                   {getOrderStatusIcon(order.status)}
                   <div className="flex-1">
                     {order.product.product_type === 'digital' ? (
-                      <div>
-                        <p className="font-medium">Digital Product</p>
-                        <p className="text-sm text-muted-foreground">
-                          {order.status === 'completed' ? 'Delivered to your email' : 'Processing...'}
-                        </p>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="font-medium">Digital Product</p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.status === 'completed' ? 'Ready for download' : 'Processing...'}
+                          </p>
+                        </div>
+                        {(order.status === 'completed' || order.status === 'delivered') && (
+                          <SecureDownloadButton 
+                            orderId={order.id}
+                            productTitle={order.product.title}
+                            className="mt-2"
+                          />
+                        )}
                       </div>
                     ) : (
                       <div>
