@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import SellerDashboard from "./pages/SellerDashboard";
 import SellerProfile from "./pages/SellerProfile";
 import TrackOrders from "./pages/TrackOrders";
+import MyPurchases from "./pages/MyPurchases";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
 import BookMarketplace from "./pages/BookMarketplace";
@@ -71,6 +72,11 @@ const App = () => (
           <Route path="/track-orders" element={
             <ProtectedRoute>
               <TrackOrders />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-purchases" element={
+            <ProtectedRoute>
+              <MyPurchases />
             </ProtectedRoute>
           } />
           <Route path="/payment-success" element={<PaymentSuccess />} />

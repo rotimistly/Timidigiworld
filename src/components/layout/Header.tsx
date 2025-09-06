@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, User, Search, Plus, Store, Menu, Package, Settings, BookOpen, MessageSquare, Shield } from 'lucide-react';
+import { ShoppingCart, User, Search, Plus, Store, Menu, Package, Settings, BookOpen, MessageSquare, Shield, ShoppingBag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -76,6 +76,12 @@ export function Header() {
                     Sell Products
                   </Button>
                 </Link>
+                <Link to="/my-purchases">
+                  <Button variant="ghost" size="sm">
+                    <ShoppingBag className="h-4 w-4 mr-2" />
+                    My Purchases
+                  </Button>
+                </Link>
                 <Link to="/track-orders">
                   <Button variant="ghost" size="sm">
                     <Package className="h-4 w-4 mr-2" />
@@ -132,6 +138,10 @@ export function Header() {
                        <Settings className="h-5 w-5" />
                        <span>Seller Profile</span>
                      </Link>
+                    <Link to="/my-purchases" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
+                      <ShoppingBag className="h-5 w-5" />
+                      <span>My Purchases</span>
+                    </Link>
                     <Link to="/track-orders" className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted">
                       <Package className="h-5 w-5" />
                       <span>Track Orders</span>
