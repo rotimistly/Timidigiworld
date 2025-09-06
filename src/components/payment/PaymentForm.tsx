@@ -25,23 +25,12 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState('');
-  const [deliveryEmail, setDeliveryEmail] = useState(user?.email || '');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const totalAmount = product.price + (product.shipping_cost || 0);
 
   const handlePayment = async () => {
     if (!paymentMethod || !user) return;
-    
-    // For digital products, require delivery email
-    if (product.product_type === 'digital' && !deliveryEmail) {
-      toast({
-        title: "Email Required",
-        description: "Please provide an email address to receive your digital product.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     setIsProcessing(true);
 
@@ -52,7 +41,6 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
           productId: product.id,
           paymentMethod: paymentMethod,
           amount: totalAmount, // Amount in USD
-          deliveryEmail: product.product_type === 'digital' ? deliveryEmail : null,
           currency: 'NGN', // For Paystack in Nigeria
           country: 'NG'
         }
@@ -123,23 +111,6 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
           </div>
         </div>
 
-        {product.product_type === 'digital' && (
-          <div>
-            <Label htmlFor="deliveryEmail">Delivery Email Address</Label>
-            <Input
-              id="deliveryEmail"
-              type="email"
-              value={deliveryEmail}
-              onChange={(e) => setDeliveryEmail(e.target.value)}
-              placeholder="Enter email to receive your digital product"
-              required
-              className="mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Your digital product will be sent to this email after payment confirmation
-            </p>
-          </div>
-        )}
 
         <div>
           <h3 className="font-medium mb-3">Payment Method</h3>
@@ -191,7 +162,7 @@ export function PaymentForm({ product, onSuccess }: PaymentFormProps) {
 
         <Button 
           onClick={handlePayment} 
-          disabled={!paymentMethod || isProcessing || (product.product_type === 'digital' && !deliveryEmail)}
+          disabled={!paymentMethod || isProcessing}
           className="w-full"
         >
           {isProcessing ? 'Redirecting to Paystack...' : (
