@@ -44,10 +44,17 @@ export const SecureDownloadButton = ({ orderId, productTitle, className }: Secur
       link.href = file_url;
       link.download = `${productTitle}.${file_url.split('.').pop() || 'file'}`;
       link.target = '_blank';
+      link.rel = 'noopener nofollow';
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      toast.success("Download started successfully!");
+      
+      // Clean up after download starts
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 100);
+      
+      toast.success(`${productTitle} is downloading to your device!`);
 
     } catch (error: any) {
       console.error('Secure download error:', error);
