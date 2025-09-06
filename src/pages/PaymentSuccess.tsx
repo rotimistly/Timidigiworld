@@ -121,8 +121,8 @@ export default function PaymentSuccess() {
               <div className="space-y-3">
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <p>✓ Payment confirmed</p>
-                  <p>✓ Digital product ready for download</p>
-                  <p>✓ Email confirmation sent</p>
+                  <p>✓ Digital product available for download</p>
+                  <p>✓ Download directly to your device</p>
                 </div>
                 <SecureDownloadButton 
                   orderId={order?.id}
