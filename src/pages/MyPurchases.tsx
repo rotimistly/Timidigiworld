@@ -77,6 +77,9 @@ export default function MyPurchases() {
         .in('status', ['paid', 'completed', 'delivered'])
         .order('created_at', { ascending: false });
 
+      console.log('Fetching purchases for user:', user?.id);
+      console.log('Orders query result:', { data: ordersData, error });
+
       if (error) {
         console.error('Error fetching purchases:', error);
         toast.error("Failed to load your purchases");
