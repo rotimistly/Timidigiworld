@@ -42,7 +42,7 @@ serve(async (req) => {
 
     const totalAmount = parseFloat(order.amount.toString());
     const platformAmount = totalAmount * 0.25; // 25% platform fee
-    const sellerAmount = totalAmount * 0.70;  // 70% to seller
+    const sellerAmount = totalAmount * 0.75;  // 75% to seller
 
     console.log("Processing payment split:", {
       orderId,
