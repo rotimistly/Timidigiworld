@@ -81,15 +81,17 @@ export const BankAccountVerification = ({ profile, onVerificationUpdate }: BankA
 
       if (data.success) {
         toast({
-          title: "Bank Account Verified & Subaccount Created",
+          title: "Bank Account Verified",
           description: data.message,
         });
         
-        // Account name should come from Paystack verification
+        // Update local state with verified account name
         setBankDetails(prev => ({
           ...prev,
-          account_name: data.account_name || prev.account_name
+          account_name: data.account_name
         }));
+        
+        // Refresh profile data
         onVerificationUpdate();
       }
     } catch (error: any) {
@@ -105,37 +107,12 @@ export const BankAccountVerification = ({ profile, onVerificationUpdate }: BankA
   };
 
   const saveBankDetails = async () => {
-    if (!user || !bankDetails.account_name) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          bank_name: bankDetails.bank_name,
-          account_number: bankDetails.account_number,
-          account_name: bankDetails.account_name,
-          bank_code: bankDetails.bank_code
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Bank Details Saved",
-        description: "Your bank account has been linked successfully. You can now receive payments.",
-      });
-      
-      onVerificationUpdate();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save bank details",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    // This function is no longer needed as verification now saves everything
+    // Keep for backwards compatibility but show appropriate message
+    toast({
+      title: "Already Saved",
+      description: "Your bank details were saved during verification.",
+    });
   };
 
   const deleteBankAccount = async () => {
@@ -226,7 +203,7 @@ export const BankAccountVerification = ({ profile, onVerificationUpdate }: BankA
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
                 <AlertCircle className="h-4 w-4 inline mr-2" />
-                Add your bank account to receive payments from sales (70% commission)
+                Add your bank account to receive payments from sales (75% commission)
               </p>
             </div>
 
@@ -272,16 +249,8 @@ export const BankAccountVerification = ({ profile, onVerificationUpdate }: BankA
               <Button
                 onClick={verifyAccount}
                 disabled={!bankDetails.account_number || !bankDetails.bank_code || verifying}
-                variant="outline"
               >
-                {verifying ? 'Verifying...' : 'Verify Account'}
-              </Button>
-              
-              <Button
-                onClick={saveBankDetails}
-                disabled={!bankDetails.account_name || loading}
-              >
-                {loading ? 'Saving...' : 'Save Details'}
+                {verifying ? 'Verifying & Saving...' : 'Verify & Save Account'}
               </Button>
             </div>
           </div>

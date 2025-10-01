@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Package, Plus, MessageSquare, DollarSign, TrendingUp } from 'lucide-react';
+import { Package, Plus, MessageSquare, DollarSign, TrendingUp, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { ProductForm } from '@/components/seller/ProductForm';
 import { SellerMessageCenter } from '@/components/seller/SellerMessageCenter';
+import { BankAccountVerification } from '@/components/products/BankAccountVerification';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function SellerDashboard() {
@@ -18,6 +19,7 @@ export default function SellerDashboard() {
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -43,6 +45,15 @@ export default function SellerDashboard() {
     if (!user) return;
 
     setIsLoading(true);
+    
+    // Fetch seller profile
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    setProfile(profileData);
     
     // Fetch seller's products
     const { data: productsData } = await supabase
@@ -222,6 +233,7 @@ export default function SellerDashboard() {
             <TabsTrigger value="products">My Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="payment">Payment Setup</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products" className="space-y-4">
@@ -341,6 +353,30 @@ export default function SellerDashboard() {
 
           <TabsContent value="messages" className="space-y-4">
             <SellerMessageCenter />
+          </TabsContent>
+
+          <TabsContent value="payment" className="space-y-4">
+            <div className="max-w-2xl">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-2">Payment Setup</h2>
+                <p className="text-muted-foreground">
+                  Configure your bank account to receive payments. You'll receive 75% of each sale automatically.
+                </p>
+              </div>
+              {profile ? (
+                <BankAccountVerification 
+                  profile={profile} 
+                  onVerificationUpdate={fetchSellerData}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading payment settings...</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

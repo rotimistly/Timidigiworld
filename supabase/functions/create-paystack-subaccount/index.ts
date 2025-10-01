@@ -61,6 +61,44 @@ serve(async (req) => {
       account_number: bankDetails.account_number
     });
 
+    // First, verify the account to get the account name
+    const verifyResponse = await fetch(
+      `https://api.paystack.co/bank/resolve?account_number=${bankDetails.account_number}&bank_code=${bankDetails.bank_code}`,
+      {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${paystackSecretKey}`,
+        },
+      }
+    );
+
+    const verifyData = await verifyResponse.json();
+    console.log("Paystack account verification response:", verifyData);
+
+    if (!verifyData.status) {
+      throw new Error(verifyData.message || "Failed to verify bank account");
+    }
+
+    const accountName = verifyData.data.account_name;
+    console.log("Verified account name:", accountName);
+
+    // Update profile with verified account details first
+    const { error: profileUpdateError } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        bank_name: bankDetails.bank_name,
+        account_number: bankDetails.account_number,
+        account_name: accountName,
+        bank_code: bankDetails.bank_code,
+        updated_at: new Date().toISOString()
+      })
+      .eq("user_id", userId);
+
+    if (profileUpdateError) {
+      console.error("Failed to update profile with bank details:", profileUpdateError);
+      throw profileUpdateError;
+    }
+
     // Create subaccount with Paystack
     const subaccountResponse = await fetch("https://api.paystack.co/subaccount", {
       method: "POST",
@@ -72,7 +110,7 @@ serve(async (req) => {
         business_name: businessName,
         settlement_bank: bankDetails.bank_code,
         account_number: bankDetails.account_number,
-        percentage_charge: 70, // Seller gets 70%
+        percentage_charge: 75, // Seller gets 75%
         description: `Subaccount for ${businessName}`,
         primary_contact_email: userEmail,
         primary_contact_name: profile?.full_name || businessName,
@@ -111,7 +149,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       subaccount_code: subaccountData.data.subaccount_code,
-      message: "Paystack subaccount created successfully"
+      account_name: accountName,
+      message: "Bank account verified and Paystack subaccount created successfully"
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

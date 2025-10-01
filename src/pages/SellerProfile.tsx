@@ -269,7 +269,7 @@ export default function SellerProfile() {
                   <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
                   <div className="text-sm text-blue-700">
                     <p className="font-medium mb-1">Payment Information</p>
-                    <p>Add your bank details to receive payments. You'll receive 70% of each sale (25% goes to platform fees). Your bank account will be registered as a Paystack subaccount for automatic payment splits.</p>
+                    <p>Add your bank details to receive payments. You'll receive 75% of each sale (25% goes to platform fees). Your bank account will be registered as a Paystack subaccount for automatic payment splits.</p>
                   </div>
                 </div>
               </CardHeader>
